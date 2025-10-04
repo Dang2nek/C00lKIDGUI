@@ -117,12 +117,12 @@
 </style>
 </head>
 <body>
-  <div class="wrap" role="application" aria-label="Red Class Portal">
+  <div class="wrap" role="application" aria-label="C00lKID GUI">
     <header>
-      <div class="logo" aria-hidden="true">CLASS</div>
+      <div class="logo" aria-hidden="true">C00L</div>
       <div>
-        <h1>Red Class Portal</h1>
-        <div style="color:var(--muted); font-size:13px; margin-top:6px">Một giao diện chủ đề đỏ — chọn mục để xem nội dung</div>
+        <h1>C00lKID GUI</h1>
+        <div style="color:var(--muted); font-size:13px; margin-top:6px">Welcome to C00lKID GUI</div>
       </div>
     </header>
 
@@ -136,7 +136,7 @@
     <main class="card" id="mainCard" tabindex="0" aria-live="polite">
       <h2 class="content-title" id="contentTitle">INFORMATION</h2>
       <div class="content-body" id="contentBody">
-        WELCOME TO C00lKID GUI
+        Chào mừng! Đây là trang thông tin. Chạm vào một mục để xem nội dung tương ứng.
       </div>
     </main>
   </div>
@@ -152,23 +152,22 @@
     const CONTENT = {
       info: {
         title: 'INFORMATION',
-        body: '<p>WELCOME TO GUI.</p>'
+        body: '<p>Trang tổng quan: thông báo, lịch, và hướng dẫn cho lớp học.</p>'
       },
       teachers: {
         title: 'TEACHERS',
-        body: '<p>COMING SOON</p>'
+        body: '<p>Danh sách giáo viên, tài khoản và thông tin liên lạc.</p>'
       },
       students: {
         title: 'STUDENTS',
-        body: '<p>WHO WANT KNOW THIS ?</p>'
+        body: '<p>Danh sách học sinh, điểm, và thông tin lớp.</p>'
       },
       events: {
         title: 'EVENTS',
-        body: '<p>YES,YES</p>'
+        body: '<p>Sự kiện sắp tới: thi, dã ngoại, lịch họp phụ huynh.</p>'
       }
     };
 
-    // Ensure only one tab is active. Add 'active' class and set aria-selected.
     function activateTab(tabEl, skipFocus=false){
       tabs.forEach(t=>{
         t.classList.remove('active');
@@ -177,7 +176,6 @@
       tabEl.classList.add('active');
       tabEl.setAttribute('aria-selected','true');
 
-      // update content based on data-key
       const key = tabEl.dataset.key || 'info';
       const c = CONTENT[key] || CONTENT.info;
       titleEl.textContent = c.title;
@@ -186,32 +184,24 @@
       if(!skipFocus) tabEl.focus({preventScroll:true});
     }
 
-    // click & touch handling
     tabs.forEach(tab=>{
-      tab.addEventListener('click', (ev)=>{
-        activateTab(ev.currentTarget);
-      });
-      // support touchstart to make it extra responsive on mobile
-      tab.addEventListener('touchstart', (ev)=>{
-        // prevent double firing; handle only the visual selection here
+      tab.addEventListener('click', ev=>activateTab(ev.currentTarget));
+      tab.addEventListener('touchstart', ev=>{
         ev.preventDefault();
         activateTab(ev.currentTarget);
       }, {passive:false});
     });
 
-    // Keyboard navigation: ArrowLeft / ArrowRight move between tabs
-    document.addEventListener('keydown', (e)=>{
+    document.addEventListener('keydown', e=>{
       const focused = document.activeElement;
       const idx = tabs.indexOf(focused);
       if(idx !== -1){
         if(e.key === 'ArrowRight'){
           e.preventDefault();
-          const next = tabs[(idx+1)%tabs.length];
-          activateTab(next);
+          activateTab(tabs[(idx+1)%tabs.length]);
         } else if(e.key === 'ArrowLeft'){
           e.preventDefault();
-          const prev = tabs[(idx-1 + tabs.length)%tabs.length];
-          activateTab(prev);
+          activateTab(tabs[(idx-1 + tabs.length)%tabs.length]);
         } else if(e.key === 'Home'){
           e.preventDefault();
           activateTab(tabs[0]);
@@ -222,7 +212,6 @@
       }
     });
 
-    // initialize - activate first tab
     activateTab(tabs[0], true);
   })();
 </script>
