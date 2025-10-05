@@ -256,9 +256,9 @@
   let runningHack = false;
   let hackTimer = null;
 
-  // firewall breaker state + generated IP set for uniqueness within this page session
+  // firewall breaker state + generated passwords set for uniqueness within this page session
   let firewallBroken = false;
-  const generatedIPs = new Set();
+  const generatedPasswords = new Set();
 
   function appendLine(text, cls) {
     const el = document.createElement('div');
@@ -296,22 +296,23 @@
     }
   }
 
-  // Generate a unique IP starting with 125.x.y.z within this session (does NOT guarantee global uniqueness)
-  function genUnique125IP(){
+  // generate a random password and ensure uniqueness in this session
+  function genUniquePassword(len = 12){
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
     for(let attempts=0; attempts<2000; attempts++){
-      const a = 125;
-      const b = Math.floor(Math.random()*256);
-      const c = Math.floor(Math.random()*256);
-      const d = Math.floor(Math.random()*254) + 1; // 1..254
-      const ip = `${a}.${b}.${c}.${d}`;
-      if(!generatedIPs.has(ip)){
-        generatedIPs.add(ip);
-        return ip;
+      let pw = '';
+      for(let i=0;i<len;i++){
+        pw += chars.charAt(Math.floor(Math.random()*chars.length));
+      }
+      if(!generatedPasswords.has(pw)){
+        generatedPasswords.add(pw);
+        return pw;
       }
     }
     // fallback
-    const fallback = `125.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*254)+1}`;
-    generatedIPs.add(fallback);
+    let fallback = '';
+    for(let i=0;i<len;i++) fallback += chars.charAt(Math.floor(Math.random()*chars.length));
+    generatedPasswords.add(fallback);
     return fallback;
   }
 
@@ -339,7 +340,7 @@
   ];
 
   // run fake hack: when firewallBroken==false -> ACCESS DENIED (as before)
-  // when firewallBroken==true -> print target ip: 125.x.y.z (unique within page session)
+  // when firewallBroken==true -> print target password: <generated-password> (unique in session)
   function runFakeHack(){
     if(runningHack) return;
     runningHack = true;
@@ -362,10 +363,10 @@
           appendLine('');
           appendLine('<span class="accessDenied">ACCESS DENIED</span>');
         } else {
-          // success: output unique ip starting with 125.
-          const ip = genUnique125IP();
+          // success: output unique target password
+          const pw = genUniquePassword(12);
           appendLine('');
-          appendLine('<strong>target ip: ' + ip + '</strong>');
+          appendLine('<strong>target password: ' + pw + '</strong>');
         }
         cmdInput.focus();
       }
