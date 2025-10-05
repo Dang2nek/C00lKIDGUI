@@ -3,24 +3,29 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>C00lGUI</title>
+<title>C00lGUI — Full Simulator</title>
 <style>
-/* Full-page styles */
+/* =========================================================================
+   Styles: Keep terminal red theme, readable text, explicit scrollbars.
+   This CSS intentionally contains many small rules to be explicit.
+   ========================================================================= */
 :root{
-  --bg:#060507;
+  --bg:#050405;
   --card:#0b0b0b;
   --red:#ff3b3b;
   --red-deep:#b71c1c;
-  --muted:rgba(255,255,255,0.90);
-  --mono:"Courier New", Courier, monospace;
-}
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:
-  radial-gradient(ellipse at center,#0f0f12 0%, #050405 60%), linear-gradient(180deg,#070007 0%, #000 100%);
-  color:var(--muted); font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  --muted:rgba(255,255,255,0.92);
+  --mono: "Courier New", Courier, monospace;
 }
 
-/* Center card */
+* { box-sizing: border-box; }
+html,body { height:100%; margin:0; background:
+  radial-gradient(ellipse at center,#0f0f12 0%, #020202 60%),
+  linear-gradient(180deg,#060003 0%, #000 100%);
+  color:var(--muted); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+}
+
+/* Page container and card */
 .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:28px; }
 .card {
   width:980px; max-width:96%;
@@ -30,47 +35,82 @@ html,body{height:100%;margin:0;background:
   box-shadow: 0 30px 90px rgba(0,0,0,0.6);
   text-align:center;
 }
-.title { font-size:28px; color:var(--red-deep); font-weight:800; margin:0 0 6px 0; text-shadow:0 0 14px rgba(255,80,80,0.12); }
+
+/* Headings */
+.title { font-size:28px; color:var(--red-deep); font-weight:800; margin:0 0 6px 0; text-shadow: 0 0 14px rgba(255,80,80,0.12); }
+.subtitle { font-size:14px; color:rgba(255,255,255,0.78); margin:6px 0 16px 0; }
+
+/* Enable terminal as clickable accessible element */
 #enableTerminal {
-  color:var(--muted); margin:6px 0 18px 0; cursor:pointer; display:inline-block;
-  padding:8px 12px; border-radius:8px;
+  display:inline-block; padding:10px 14px; border-radius:8px;
+  background: rgba(255,255,255,0.01); color:var(--muted);
+  cursor:pointer; user-select:none; outline:none;
+  border:1px solid rgba(255,255,255,0.02);
 }
-#enableTerminal:focus { outline: 2px solid rgba(255,107,107,0.14); outline-offset:4px; }
+#enableTerminal:focus { box-shadow: 0 0 0 8px rgba(255,107,107,0.06); }
 
-/* progress bar */
-.progressWrap { width:100%; max-width:720px; margin:12px auto 6px auto; background:rgba(255,255,255,0.02); border-radius:8px; height:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.02); }
-.progressFill { height:12px; width:0%; background:linear-gradient(90deg,var(--red),var(--red-deep)); transition:width 80ms linear; }
+/* Progress bar - initialization */
+.progressBarOuter {
+  width:88%; max-width:720px; margin:18px auto 8px auto; background:rgba(255,255,255,0.02);
+  border-radius:8px; height:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.02);
+}
+.progressBarInner { height:12px; width:0%; background: linear-gradient(90deg,var(--red),var(--red-deep)); transition: width 80ms linear; }
 
-/* fake terminal overlay */
+/* Fake terminal overlay styling */
 #fakeCMD {
-  display:none; position:fixed; top:6vh; left:6vw; width:88vw; height:88vh;
+  display:none;
+  position:fixed;
+  top:6vh; left:6vw;
+  width:88vw; height:88vh;
   max-width:1280px; max-height:920px;
-  background:#070404; color:var(--red); font-family:var(--mono);
-  border:3px solid var(--red-deep); z-index:99999; border-radius:10px; overflow:hidden;
+  background:#070404; color:var(--red);
+  border: 3px solid var(--red-deep);
   box-shadow: 0 40px 160px rgba(183,28,28,0.35);
+  z-index:99999; border-radius:10px; overflow:hidden;
+  font-family: var(--mono);
 }
-#cmdHeader { display:flex; align-items:center; gap:12px; padding:10px 14px; border-bottom:1px solid rgba(255,0,0,0.04); background:linear-gradient(90deg, rgba(255,0,0,0.02), rgba(255,0,0,0.01)); }
-#cmdTitle { font-weight:800; color:var(--red-deep); }
+
+#cmdHeader { display:flex; gap:12px; align-items:center; padding:12px 16px; background: linear-gradient(90deg, rgba(255,0,0,0.02), rgba(255,0,0,0.01)); border-bottom:1px solid rgba(255,0,0,0.04); }
+#cmdTitle { font-weight:800; color:var(--red-deep); font-size:16px; }
 #cmdClose { margin-left:auto; background:transparent; border:none; color:var(--red); font-weight:700; cursor:pointer; padding:8px 12px; border-radius:6px; }
 #cmdClose:hover { background:rgba(255,0,0,0.03); }
 
-/* terminal body / text */
-#cmdBody { padding:14px; height: calc(100% - 120px); overflow:auto; white-space:pre-wrap; font-size:14px; line-height:1.45; color:var(--red); background:linear-gradient(180deg,#040303 0%, #010101 100%); }
-.cmd-line { color:var(--red); margin:6px 0; font-family:var(--mono); }
+/* Terminal text area */
+#cmdBody {
+  padding:14px 18px;
+  height: calc(100% - 120px);
+  overflow:auto;
+  white-space:pre-wrap;
+  font-size:14px;
+  line-height:1.45;
+  color:var(--red);
+  background: linear-gradient(180deg,#040303 0%, #000 100%);
+}
+
+/* terminal scrollbar custom (webkit) */
+#cmdBody::-webkit-scrollbar { width:10px; height:10px; }
+#cmdBody::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); border-radius:6px; }
+#cmdBody::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(255,59,59,0.18), rgba(183,28,28,0.28)); border-radius:6px; border: 2px solid rgba(0,0,0,0.14); }
+
+/* Small helper classes */
+.cmd-line { margin:6px 0; font-family:var(--mono); color:var(--red); }
 .cmd-echo { color:var(--red); font-weight:600; }
-.cmd-strong { color:var(--red); font-weight:800; }
+.cmd-strong { font-weight:800; color:var(--red); }
 .accessDenied { display:block; margin-top:8px; font-weight:900; font-size:34px; color:#ff4d4d; text-shadow:0 0 18px rgba(255,0,0,0.18); letter-spacing:2px; }
 
-/* input */
-#cmdInputWrap{ padding:10px 16px 18px 16px; border-top:1px solid rgba(255,0,0,0.03); display:flex; gap:8px; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); }
-#cmdPrompt{ color:var(--red); font-family:var(--mono); font-size:14px; }
-#cmdInput{ flex:1; background:transparent; border:none; outline:none; color:var(--red); font-family:var(--mono); font-size:14px; }
+/* Input area */
+#cmdInputWrap { padding:10px 16px 18px 16px; border-top:1px solid rgba(255,0,0,0.03); display:flex; gap:8px; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); }
+#cmdPrompt { font-family:var(--mono); font-size:14px; color:var(--red); }
+#cmdInput { flex:1; background:transparent; border:none; outline:none; color:var(--red); font-family:var(--mono); font-size:14px; }
 
-/* visual SVG inside terminal */
+/* Visual area container for SVGs inserted into terminal */
 .visual-wrap { margin:12px 0; display:flex; justify-content:center; align-items:center; }
-.visual-wrap svg { width:88%; max-width:760px; height:auto; display:block; border-radius:6px; background:#020202; }
+.visual-wrap svg { width:88%; max-width:760px; height:auto; display:block; background:#020202; border-radius:6px; }
 
-/* responsive tweaks */
+/* Accessibility helper */
+kbd { background:rgba(255,255,255,0.03); padding:2px 6px; border-radius:6px; font-family:var(--mono); font-size:12px; color:var(--muted); }
+
+/* Responsive adjustments */
 @media (max-width:720px){
   .card { padding:16px; }
   .visual-wrap svg { width:100%; }
@@ -81,17 +121,22 @@ html,body{height:100%;margin:0;background:
 <body>
   <div class="wrap">
     <div class="card" role="main" aria-live="polite">
-      <h1 class="title">WELCOME BACK C00lKID</h1>
+      <div class="title">WELCOME BACK C00lKID</div>
+      <div class="subtitle">Interactive simulator — client-only</div>
 
-      <!-- Enable terminal clickable text (acts like Ctrl+R) -->
-      <div id="enableTerminal" role="button" tabindex="0" aria-pressed="false">Enable terminal..</div>
-
-      <!-- 5-second initialization progress (visual) -->
-      <div class="progressWrap" aria-hidden="false">
-        <div id="initProgress" class="progressFill" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+      <!-- Enable Terminal control -->
+      <div id="enableTerminal" role="button" tabindex="0" aria-pressed="false">
+        Enable terminal..
       </div>
 
-      <div style="color:rgba(255,255,255,0.75); font-size:13px; margin-top:4px;">Click to open or press <kbd>Ctrl+R</kbd> after initialization.</div>
+      <!-- Progress bar -->
+      <div class="progressBarOuter" aria-hidden="false" style="margin-top:18px;">
+        <div id="progressFill" class="progressBarInner" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
+      </div>
+
+      <div style="color:rgba(255,255,255,0.7); font-size:13px; margin-top:8px;">
+        Click the text above or press <kbd>Ctrl + R</kbd> after initialization to open the terminal.
+      </div>
     </div>
   </div>
 
@@ -113,272 +158,311 @@ html,body{height:100%;margin:0;background:
 
 <script>
 /* =========================================================================
-   Full Terminal Simulator JS (detailed, non-truncated)
-   - initialize progress (5s)
-   - enableTerminal click/keyboard -> open terminal (same as Ctrl+R)
-   - commands: firewall, hack, listen, control, spawn clone, inject <mode>, teleport
-   - SVG visuals: computer -> globe -> target; moving arrow; clones; teleport particle
-   - inject modes: random, pathfinding, cursor (cursor follows actual mouse in SVG)
+   Full explicit JavaScript — verbose and non-truncated.
+   - All commands implemented as separate, long, clear functions.
+   - No recursive call patterns causing stack overflow.
+   - Animation via requestAnimationFrame.
+   - Cursor-mode tracking for 'inject' implemented.
    ========================================================================= */
 
 /* --------------------------
-   Element references
+   Element refs and initial state
    -------------------------- */
-const enableBtn = document.getElementById('enableTerminal');
-const progressFill = document.getElementById('initProgress');
+const enableTerminalEl = document.getElementById('enableTerminal');
+const progressFillEl = document.getElementById('progressFill');
 const fakeCMD = document.getElementById('fakeCMD');
 const cmdBody = document.getElementById('cmdBody');
 const cmdInput = document.getElementById('cmdInput');
 const cmdClose = document.getElementById('cmdClose');
 
+/* State flags and data structures */
+let initialized = false;            // true after 5s init
+let progressTimerRef = null;        // reference to init timer
+let mainLoadProgress = 0;           // 0..100
+
+let firewallBroken = false;         // set when 'firewall' runs
+let hackAttempted = false;          // whether hack was run at least once
+let hackSuccessful = false;         // whether hack succeeded (firewallBroken true at completion)
+let targetPassword = null;          // generated password on success
+
+let listenDone = false;             // set after 'listen' completes and visual created
+let svgContainer = null;            // reference to last network SVG
+let svgViewBox = { w: 240, h: 80 }; // standard viewBox for inserted svgs
+
+let controlActive = false;          // set when 'control' executed
+let clonesActive = false;           // true while clones animate
+let cloneObjects = [];              // array of clone meta objects
+
+let CLONE_DURATION = 5000;          // ms
+let CLONE_COUNT = 6;
+
+let currentInjectMode = 'random';   // 'random' | 'pathfinding' | 'cursor'
+let lastCursorPos = { x: 120, y: 40 };
+
+/* Misc helper collections */
+const generatedPasswords = new Set(); // avoid duplicate passwords in session
+
 /* --------------------------
-   State variables
+   Utility helper functions
    -------------------------- */
-let mainLoaded = false;            // progress done
-let progressInterval = null;
 
-let firewallBroken = false;        // set by "firewall"
-let hackAttempted = false;         // indicates hack was run at least once
-let hackSuccessful = false;        // true if firewallBroken was true when hack finished
-let targetPassword = null;         // generated password when hack succeeds
-
-let listenDone = false;            // after listen completed & visual created
-let controlActive = false;         // after control command
-let clonesActive = false;          // true while clones are animating
-let cloneObjects = [];             // structured objects for clones
-let CLONE_DURATION = 5000;         // 5 seconds clone lifetime (ms)
-let CLONE_COUNT = 6;               // number of clones spawned by default
-
-let currentInjectMode = 'random';  // 'random' | 'pathfinding' | 'cursor'
-let lastCursorPos = { x: 120, y: 40 }; // coordinate inside SVG viewBox (initial)
-let svgContainer = null;           // the SVG element created by listen
-let svgViewBox = { w: 240, h: 80 }; // viewBox coordinate system used for mapping mouse
-
-/* utility: escape html for safe display */
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
-}
-
-/* appendLine - prints text into terminal (all red by CSS); removes ':' as requested */
-function appendLine(text, cls){
-  const line = document.createElement('div');
-  if(cls) line.className = cls;
-  // remove literal colon characters if present (user instruction)
-  const safe = String(text).replace(/:/g,'');
-  line.innerHTML = safe;
-  cmdBody.appendChild(line);
+/**
+ * appendLine(text, cls)
+ * - Adds a new line of terminal output to #cmdBody.
+ * - All colons ":" are removed from displayed text per user's request.
+ * - cls optional for CSS class names such as 'cmd-echo', 'cmd-strong'.
+ */
+function appendLine(text, cls) {
+  const el = document.createElement('div');
+  el.className = cls ? 'cmd-line ' + cls : 'cmd-line';
+  // remove colon characters to match user's instruction
+  const safe = String(text).replace(/:/g, '');
+  el.innerHTML = safe;
+  cmdBody.appendChild(el);
+  // auto-scroll to bottom
   cmdBody.scrollTop = cmdBody.scrollHeight;
 }
 
-/* --------------------------
-   Initialization: 5-second progress
-   -------------------------- */
-(function startInitProgress(){
-  let progress = 0;
-  const totalMs = 5000;
-  const step = 75; // update every 75ms -> ~66 steps -> fine-grained fill
-  const steps = Math.ceil(totalMs / step);
-  const inc = 100 / steps;
+/**
+ * escapeHtml(s)
+ * - Small helper to escape user-provided strings displayed back to terminal.
+ */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, function (m) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]; });
+}
 
-  progressInterval = setInterval(()=>{
-    progress = Math.min(100, progress + inc);
-    progressFill.style.width = progress + '%';
-    progressFill.setAttribute('aria-valuenow', Math.floor(progress));
-    if(progress >= 100){
-      clearInterval(progressInterval);
-      mainLoaded = true;
-      // accessibility hint: mark enable button available
-      enableBtn.setAttribute('aria-pressed','false');
-      appendLine('[SYSTEM] Terminal initialization complete', 'cmd-echo');
-      // keep the page quiet — terminal opens only on click/Ctrl+R
+/* --------------------------
+   Initialization progress (5 seconds)
+   - Update progress bar visually and set initialized flag when done.
+   -------------------------- */
+(function startInitialization() {
+  // total duration desired: 5000ms
+  const totalMs = 5000;
+  const stepMs = 75;
+  const steps = Math.ceil(totalMs / stepMs);
+  const increment = 100 / steps;
+  mainLoadProgress = 0;
+  progressFillEl.style.width = '0%';
+  progressFillEl.setAttribute('aria-valuenow', '0');
+
+  progressTimerRef = setInterval(function () {
+    mainLoadProgress = Math.min(100, mainLoadProgress + increment);
+    progressFillEl.style.width = Math.floor(mainLoadProgress) + '%';
+    progressFillEl.setAttribute('aria-valuenow', Math.floor(mainLoadProgress));
+    if (mainLoadProgress >= 100) {
+      clearInterval(progressTimerRef);
+      progressTimerRef = null;
+      initialized = true;
+      // announce system initialization in the terminal if it were open
+      // but do not auto-open terminal — user must click or press ctrl+r
+      // we still append a subtle invisible note to DOM for accessibility
+      const readyNote = document.createElement('div');
+      readyNote.style.color = 'rgba(255,255,255,0.08)';
+      readyNote.style.fontSize = '11px';
+      readyNote.textContent = '[SYSTEM] Initialization complete';
+      // We don't append into cmdBody here to avoid showing small note (user didn't want extra text)
     }
-  }, step);
+  }, stepMs);
 })();
 
 /* --------------------------
-   showCMD / hideCMD (open/close terminal)
-   - showCMD only works when mainLoaded true
+   Terminal show/hide
+   - showTerminal: open only if initialized true
+   - hideTerminal: close overlay and stop running loops if needed
    -------------------------- */
-function showCMD(){
-  if(!mainLoaded){
-    // visual feedback if clicked too early
-    enableBtn.animate([{opacity:0.6},{opacity:1}],{duration:250,iterations:1});
+function showTerminal() {
+  if (!initialized) {
+    // quick feedback pulse
+    enableTerminalEl.animate([{ transform: 'scale(0.985)' }, { transform: 'scale(1)' }], { duration: 160 });
     return;
   }
   fakeCMD.style.display = 'block';
-  cmdBody.innerHTML = ''; // clear previous
-  appendLine('<span style="color:#ff7b7b">[C00lKID TERMINAL v0.1]</span>');
-  // do not print extra instruction lines (user asked to remove)
+  // Clear previous terminal output when opening new session for clarity
+  cmdBody.innerHTML = '';
+  appendLine('<span style="color:#ff7b7b">[C00lKID TERMINAL v0.1]</span>', 'cmd-echo');
   cmdInput.focus();
 }
 
-function hideCMD(){
+function hideTerminal() {
   fakeCMD.style.display = 'none';
-  // stop any running hack loops safely
-  if(hackIntervalRef) { clearInterval(hackIntervalRef); hackIntervalRef = null; }
+  // stop long-running intervals if any running hack
+  if (hackIntervalRef) {
+    clearInterval(hackIntervalRef);
+    hackIntervalRef = null;
+    runningHack = false;
+  }
 }
 
-/* Attach enableBtn interactions (click and keyboard) */
-if(enableBtn){
-  enableBtn.addEventListener('click', ()=> showCMD());
-  enableBtn.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter' || e.key === ' '){
-      e.preventDefault();
-      showCMD();
-    }
+/* Hook enable terminal element for click + keyboard accessibility */
+if (enableTerminalEl) {
+  enableTerminalEl.addEventListener('click', function () { showTerminal(); });
+  enableTerminalEl.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showTerminal(); }
   });
 }
 
-/* Ctrl+R / Escape keyboard handling */
-window.addEventListener('keydown', (e)=>{
-  if(e.ctrlKey && e.key.toLowerCase() === 'r'){
+/* Bind Ctrl+R to open terminal and Escape to close */
+window.addEventListener('keydown', function (e) {
+  if (e.ctrlKey && e.key.toLowerCase() === 'r') {
     e.preventDefault();
-    showCMD();
+    showTerminal();
   }
-  if(e.key === 'Escape'){
-    if(fakeCMD.style.display === 'block') hideCMD();
+  if (e.key === 'Escape') {
+    if (fakeCMD.style.display === 'block') hideTerminal();
   }
 });
-
-/* close button */
-cmdClose.addEventListener('click', hideCMD);
+cmdClose.addEventListener('click', hideTerminal);
 
 /* --------------------------
-   Command processing
-   All commands are handled by parsing input on Enter
-   Keep everything verbose and step-by-step
+   Command implementations — verbose and explicit
+   - Each command is its own function; long comments and step-by-step logs included.
    -------------------------- */
 
-let hackIntervalRef = null; // reference to hack interval to stop if needed
-
-/* firewall command: engages firewall breaker (verbose) */
-function cmd_firewall(){
-  if(firewallBroken){
-    appendLine('Firewall already disabled');
+/* FIREWALL
+   - Simulate engaging a firewall breaker with step logs.
+   - Sets firewallBroken true for subsequent hack success.
+*/
+function cmd_firewall() {
+  if (firewallBroken) {
+    appendLine('Firewall breaker already active');
     return;
   }
   appendLine('> Engaging firewall breaker', 'cmd-echo');
   appendLine('Loading firewall bypass modules');
-  appendLine('Applying temporary kernel patches');
-  appendLine('Rewriting DPI signatures... done');
-  appendLine('Adjusting ACLs and NAT rules');
-  firewallBroken = true;
-  appendLine('Firewall breaker engaged You may now run hack');
+  appendLine('Patching kernel-level signatures');
+  appendLine('Injecting temporary hooks into packet filter');
+  appendLine('Rewriting access control lists');
+  appendLine('Finalizing bypass - testing handshake');
+  // small delay simulation
+  setTimeout(function () {
+    firewallBroken = true;
+    appendLine('Firewall breaker engaged You may now run hack');
+  }, 650);
 }
 
-/* hack command: runs ~5s of nonsense lines
-   - if firewallBroken is false -> ACCESS DENIED
-   - if true -> generate target password and allow listen
+/* HACK
+   - 5 seconds of chaotic terminal output (nonsense logs).
+   - If firewallBroken was false at completion => ACCESS DENIED.
+   - If firewallBroken was true => success => generate a target password.
 */
-function cmd_hack(){
-  if(hackIntervalRef) {
-    appendLine('Hack already running');
-    return;
-  }
-
+let hackIntervalRef = null;
+let runningHack = false;
+function cmd_hack() {
+  if (runningHack) { appendLine('Hack sequence already running'); return; }
   appendLine('> Executing hack sequence', 'cmd-echo');
+  runningHack = true;
   hackAttempted = true;
   let ticks = 0;
-  const maxTicks = 25; // 25 * 200ms = 5s
-
-  const nonsense = [
-    "Loading kernel module OK",
-    "Resolving vector signature 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
-    "Spawning rogue thread at 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
-    "Buffering entropy 32%",
-    "Hash collision detected retrying",
-    "Allocating virtual page " + Math.floor(Math.random()*4096),
-    "Patching system call table done",
-    "Overflowing stack frame warning",
-    "Decrypting payload chunk 3/8",
-    "Handshake with unknown host established",
-    "Randomizing pointers OK",
-    "Clearing temp logs",
-    "Flushing CPU cache lines",
-    "Injecting packet to /dev/null",
-    "Kernel panic simulated (test mode)",
-    "Synchronizing with time server fail",
-    "Forking zombie processes 7",
-    "Simulating memory leak +1.2MB",
-    "Overwriting sector 13 done",
-    "Triggering ISR vector 0x" + Math.floor(Math.random()*255).toString(16)
+  const maxTicks = 25; // roughly 5s at 200ms per tick
+  const noise = [
+    'Loading kernel module OK',
+    'Resolving vector signature 0x' + Math.floor(Math.random() * 0xFFFF).toString(16),
+    'Spawning rogue thread at 0x' + Math.floor(Math.random() * 0xFFFF).toString(16),
+    'Buffering entropy 32%',
+    'Hash collision detected retrying',
+    'Allocating virtual page ' + Math.floor(Math.random() * 4096),
+    'Patching system call table done',
+    'Overflowing stack frame warning',
+    'Decrypting payload chunk 3/8',
+    'Handshake with unknown host established',
+    'Randomizing pointers OK',
+    'Clearing temp logs',
+    'Flushing CPU cache lines',
+    'Injecting packet to /dev/null',
+    'Kernel panic simulated test mode',
+    'Synchronizing with time server fail',
+    'Forking zombie processes 7',
+    'Simulating memory leak +1.2MB',
+    'Overwriting sector 13 done',
+    'Triggering ISR vector 0x' + Math.floor(Math.random() * 255).toString(16)
   ];
 
-  hackIntervalRef = setInterval(()=>{
-    // print 1-3 lines per tick for chaos
-    const lines = 1 + Math.floor(Math.random()*2);
-    for(let i=0;i<lines;i++){
-      const idx = Math.floor(Math.random()*nonsense.length);
-      const line = nonsense[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999));
-      appendLine(line);
+  hackIntervalRef = setInterval(function () {
+    // print a variable number of lines to make output chaotic
+    const lines = 1 + Math.floor(Math.random() * 2);
+    for (let i = 0; i < lines; i++) {
+      const idx = Math.floor(Math.random() * noise.length);
+      const text = noise[idx].replace(/\d+/g, function () { return Math.floor(Math.random() * 9999); });
+      appendLine(text);
     }
     ticks++;
-    if(ticks >= maxTicks){
+    if (ticks >= maxTicks) {
       clearInterval(hackIntervalRef);
       hackIntervalRef = null;
-      if(!firewallBroken){
+      runningHack = false;
+      // decide success or fail based on firewallBroken
+      if (!firewallBroken) {
         // ACCESS DENIED path
         appendLine('');
         appendLine('<span class="accessDenied">ACCESS DENIED</span>');
+        appendLine('Hack sequence terminated due to active firewall policies');
         hackSuccessful = false;
-        appendLine('Hack sequence terminated due to active firewall');
       } else {
-        // Success path
+        // success path: create a unique target password (client-side)
         targetPassword = genUniquePassword(12);
         appendLine('');
         appendLine('<span class="cmd-strong">target password ' + targetPassword + '</span>');
         hackSuccessful = true;
-        appendLine('(run listen next to map network then control will be allowed)');
+        appendLine('(run listen next to visualize network; control will be available after listen)');
       }
     }
   }, 200);
 }
 
-/* helper: generate unique pseudo-random password string (client-only) */
-const generatedPasswords = new Set();
-function genUniquePassword(len){
+/* Helper: generate unique pseudo-random password
+   - purely client-side; avoids duplicates within the session
+*/
+function genUniquePassword(len) {
   len = len || 12;
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
-  for(let attempt=0; attempt<2000; attempt++){
+  const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let attempt = 0; attempt < 5000; attempt++) {
     let s = '';
-    for(let i=0;i<len;i++) s += chars.charAt(Math.floor(Math.random()*chars.length));
-    if(!generatedPasswords.has(s)){ generatedPasswords.add(s); return s; }
+    for (let i = 0; i < len; i++) s += charset.charAt(Math.floor(Math.random() * charset.length));
+    if (!generatedPasswords.has(s)) { generatedPasswords.add(s); return s; }
   }
   // fallback
-  let fb=''; for(let i=0;i<len;i++) fb += chars.charAt(Math.floor(Math.random()*chars.length));
-  generatedPasswords.add(fb); return fb;
+  let fb = '';
+  for (let i = 0; i < len; i++) fb += charset.charAt(Math.floor(Math.random() * charset.length));
+  generatedPasswords.add(fb);
+  return fb;
 }
 
-/* listen command:
-   - requires hackSuccessful true (i.e., hack succeeded)
-   - prints simulated lines then creates SVG network visual with computer->globe->target
-   - sets listenDone true and allows control
+/* LISTEN
+   - Visualizes a network path with an SVG (computer -> globe -> target)
+   - Plays some simulated discovery lines while "scanning"
+   - Attaches mousemove/click handlers for cursor injection later
 */
-function cmd_listen(){
-  if(!hackSuccessful){
+function cmd_listen() {
+  if (!hackSuccessful) {
     appendLine('Listen denied — run hack and succeed first');
     return;
   }
-  if(listenDone){
+  if (listenDone) {
     appendLine('Listen already completed');
     return;
   }
 
   appendLine('> Listening for network endpoints', 'cmd-echo');
-  let ticks = 0; const maxTicks = 14;
-  const noise = [
-    "Probing local network", "Gathering ARP table", "Scanning ports", "Resolving DNS entries",
-    "Fetching routing table", "Estimating latency", "Collecting service banners"
+  // produce several noise lines to mimic scanning
+  const scanNoise = [
+    'Probing local network',
+    'Collecting ARP table entries',
+    'Scanning open ports',
+    'Resolving service banners',
+    'Estimating latency to hosts',
+    'Collecting routing table',
+    'Enumerating hosts'
   ];
-
-  const li = setInterval(()=>{
-    const idx = Math.floor(Math.random()*noise.length);
-    appendLine(noise[idx] + ' ' + Math.floor(Math.random()*100));
-    ticks++;
-    if(ticks >= maxTicks){
-      clearInterval(li);
-      // create SVG visual and append to terminal
-      createNetworkVisual();
+  let step = 0;
+  const maxStep = 14;
+  const scanInterval = setInterval(function () {
+    const idx = Math.floor(Math.random() * scanNoise.length);
+    appendLine(scanNoise[idx] + ' ' + Math.floor(Math.random() * 100));
+    step++;
+    if (step >= maxStep) {
+      clearInterval(scanInterval);
+      // create the SVG visual representation
+      createNetworkSVG();
       listenDone = true;
       appendLine('');
       appendLine('(listen complete — control available)');
@@ -386,477 +470,494 @@ function cmd_listen(){
   }, 220);
 }
 
-/* createNetworkVisual - builds SVG of computer -> globe -> target with moving arrow */
-function createNetworkVisual(){
-  // Create wrapper
+/* createNetworkSVG
+   - builds an SVG that shows computer (left) → globe (middle) → target (right)
+   - includes a moving arrow (animateMotion) on a path
+   - stores svgContainer for later clone injection and cursor tracking
+*/
+function createNetworkSVG() {
+  // wrapper div
   const wrap = document.createElement('div');
   wrap.className = 'visual-wrap';
-  // create SVG with viewBox 0 0 240 80 (keeps everything consistent)
-  const svgns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgns,'svg');
-  svg.setAttribute('viewBox','0 0 240 80');
-  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
 
-  // defs for marker
-  const defs = document.createElementNS(svgns,'defs');
-  const marker = document.createElementNS(svgns,'marker');
-  marker.setAttribute('id','arrowhead');
-  marker.setAttribute('markerWidth','8');
-  marker.setAttribute('markerHeight','6');
-  marker.setAttribute('refX','8'); marker.setAttribute('refY','3'); marker.setAttribute('orient','auto');
-  const pathArrow = document.createElementNS(svgns,'path');
-  pathArrow.setAttribute('d','M0,0 L8,3 L0,6 z');
-  pathArrow.setAttribute('fill','#ff6b6b');
-  marker.appendChild(pathArrow);
+  const svgns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgns, 'svg');
+  svg.setAttribute('viewBox', '0 0 240 80');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  svg.setAttribute('aria-hidden', 'true');
+
+  // defs with marker and path
+  const defs = document.createElementNS(svgns, 'defs');
+
+  // marker for arrowheads (not used by animateMotion polygon but kept for possible static arrows)
+  const marker = document.createElementNS(svgns, 'marker');
+  marker.setAttribute('id', 'arrowhead_' + Date.now());
+  marker.setAttribute('markerWidth', '8');
+  marker.setAttribute('markerHeight', '6');
+  marker.setAttribute('refX', '8');
+  marker.setAttribute('refY', '3');
+  marker.setAttribute('orient', 'auto');
+  const mpath = document.createElementNS(svgns, 'path');
+  mpath.setAttribute('d', 'M0,0 L8,3 L0,6 z');
+  mpath.setAttribute('fill', '#ff6b6b');
+  marker.appendChild(mpath);
   defs.appendChild(marker);
+
+  // motion path used by animateMotion
+  const motionPath = document.createElementNS(svgns, 'path');
+  motionPath.setAttribute('id', 'networkPath_' + Date.now());
+  motionPath.setAttribute('d', 'M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24');
+  motionPath.setAttribute('fill', 'none');
+  motionPath.setAttribute('stroke', 'none');
+  defs.appendChild(motionPath);
+
   svg.appendChild(defs);
 
   // computer (left)
-  const comp = document.createElementNS(svgns,'g');
-  comp.setAttribute('transform','translate(12,8) scale(1)');
-  const compRect = document.createElementNS(svgns,'rect');
-  compRect.setAttribute('x','0'); compRect.setAttribute('y','0'); compRect.setAttribute('width','48'); compRect.setAttribute('height','32');
-  compRect.setAttribute('rx','4'); compRect.setAttribute('ry','4'); compRect.setAttribute('fill','#111'); compRect.setAttribute('stroke','#ff6b6b');
-  comp.appendChild(compRect);
-  svg.appendChild(comp);
+  const computerG = document.createElementNS(svgns, 'g');
+  computerG.setAttribute('transform', 'translate(12,8) scale(1)');
+  const compRect = document.createElementNS(svgns, 'rect');
+  compRect.setAttribute('x', '0'); compRect.setAttribute('y', '0'); compRect.setAttribute('width', '48'); compRect.setAttribute('height', '32');
+  compRect.setAttribute('rx', '4'); compRect.setAttribute('ry', '4'); compRect.setAttribute('fill', '#111'); compRect.setAttribute('stroke', '#ff6b6b');
+  computerG.appendChild(compRect);
+  const compInner = document.createElementNS(svgns, 'rect');
+  compInner.setAttribute('x', '4'); compInner.setAttribute('y', '4'); compInner.setAttribute('width', '40'); compInner.setAttribute('height', '20'); compInner.setAttribute('fill', '#030303');
+  computerG.appendChild(compInner);
+  const compStand = document.createElementNS(svgns, 'rect');
+  compStand.setAttribute('x', '12'); compStand.setAttribute('y', '24'); compStand.setAttribute('width', '24'); compStand.setAttribute('height', '4'); compStand.setAttribute('fill', '#0b0b0b'); compStand.setAttribute('stroke', '#ff6b6b');
+  computerG.appendChild(compStand);
+  svg.appendChild(computerG);
 
   // globe (center)
-  const globe = document.createElementNS(svgns,'g');
-  globe.setAttribute('transform','translate(96,4) scale(1)');
-  const globeCircle = document.createElementNS(svgns,'circle');
-  globeCircle.setAttribute('cx','28'); globeCircle.setAttribute('cy','28'); globeCircle.setAttribute('r','24'); globeCircle.setAttribute('fill','#071'); globeCircle.setAttribute('stroke','#ff6b6b');
-  globe.appendChild(globeCircle);
-  svg.appendChild(globe);
+  const globeG = document.createElementNS(svgns, 'g');
+  globeG.setAttribute('transform', 'translate(112,2) scale(1)');
+  const globeCircle = document.createElementNS(svgns, 'circle');
+  globeCircle.setAttribute('cx', '28'); globeCircle.setAttribute('cy', '28'); globeCircle.setAttribute('r', '24'); globeCircle.setAttribute('fill', '#071'); globeCircle.setAttribute('stroke', '#ff6b6b');
+  globeG.appendChild(globeCircle);
+  const globePath1 = document.createElementNS(svgns, 'path');
+  globePath1.setAttribute('d', 'M4 28 C12 12, 44 12, 52 28'); globePath1.setAttribute('stroke', '#ff6b6b'); globePath1.setAttribute('stroke-width', '1.2'); globePath1.setAttribute('fill', 'none');
+  globeG.appendChild(globePath1);
+  const globePath2 = document.createElementNS(svgns, 'path');
+  globePath2.setAttribute('d', 'M28 4 C24 16, 24 40, 28 52'); globePath2.setAttribute('stroke', '#ff6b6b'); globePath2.setAttribute('stroke-width', '1.2'); globePath2.setAttribute('fill', 'none');
+  globeG.appendChild(globePath2);
+  svg.appendChild(globeG);
 
   // target (right)
-  const targ = document.createElementNS(svgns,'g');
-  targ.setAttribute('transform','translate(196,16) scale(1)');
-  const targRect = document.createElementNS(svgns,'rect');
-  targRect.setAttribute('x','0'); targRect.setAttribute('y','0'); targRect.setAttribute('width','24'); targRect.setAttribute('height','24');
-  targRect.setAttribute('rx','4'); targRect.setAttribute('ry','4'); targRect.setAttribute('fill','#111'); targRect.setAttribute('stroke','#ff6b6b');
-  const targText = document.createElementNS(svgns,'text');
-  targText.setAttribute('x','12'); targText.setAttribute('y','16'); targText.setAttribute('font-size','14'); targText.setAttribute('text-anchor','middle'); targText.setAttribute('fill','#ff6b6b');
+  const targG = document.createElementNS(svgns, 'g');
+  targG.setAttribute('transform', 'translate(212,12) scale(1)');
+  const targRect = document.createElementNS(svgns, 'rect');
+  targRect.setAttribute('x', '0'); targRect.setAttribute('y', '0'); targRect.setAttribute('width', '24'); targRect.setAttribute('height', '24'); targRect.setAttribute('rx', '4'); targRect.setAttribute('ry', '4'); targRect.setAttribute('fill', '#111'); targRect.setAttribute('stroke', '#ff6b6b');
+  const targText = document.createElementNS(svgns, 'text');
+  targText.setAttribute('x', '12'); targText.setAttribute('y', '16'); targText.setAttribute('font-size', '14'); targText.setAttribute('text-anchor', 'middle'); targText.setAttribute('fill', '#ff6b6b');
   targText.textContent = 'T';
-  targ.appendChild(targRect); targ.appendChild(targText);
-  svg.appendChild(targ);
+  targG.appendChild(targRect); targG.appendChild(targText); svg.appendChild(targG);
 
-  // motion path (hidden for animateMotion)
-  const defsPath = document.createElementNS(svgns,'defs');
-  const mpath = document.createElementNS(svgns,'path');
-  mpath.setAttribute('id','networkPath');
-  mpath.setAttribute('d','M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24');
-  mpath.setAttribute('fill','none'); mpath.setAttribute('stroke','none');
-  defsPath.appendChild(mpath);
-  svg.appendChild(defsPath);
+  // visible dashed path
+  const dashPath = document.createElementNS(svgns, 'path');
+  dashPath.setAttribute('d', motionPath.getAttribute('d'));
+  dashPath.setAttribute('stroke', '#ff6b6b'); dashPath.setAttribute('stroke-width', '1.2'); dashPath.setAttribute('fill', 'none'); dashPath.setAttribute('stroke-dasharray', '8 6'); dashPath.setAttribute('opacity', '0.22');
+  svg.appendChild(dashPath);
 
-  // visible dashed path to hint route
-  const visiblePath = document.createElementNS(svgns,'path');
-  visiblePath.setAttribute('d','M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24');
-  visiblePath.setAttribute('stroke','#ff6b6b');
-  visiblePath.setAttribute('stroke-width','1.6');
-  visiblePath.setAttribute('fill','none');
-  visiblePath.setAttribute('stroke-dasharray','6 6');
-  svg.appendChild(visiblePath);
-
-  // moving arrow polygon (on top)
-  const arrowGroup = document.createElementNS(svgns,'g');
-  const poly = document.createElementNS(svgns,'polygon');
-  poly.setAttribute('points','0,0 0,6 9,3');
-  poly.setAttribute('fill','#ff6b6b');
-  // animateMotion element using mpath (note: for broad compatibility we create animateMotion)
-  const animateMotion = document.createElementNS(svgns,'animateMotion');
-  animateMotion.setAttribute('dur','3.6s');
-  animateMotion.setAttribute('repeatCount','indefinite');
-  animateMotion.setAttribute('rotate','auto');
-  const mpathRef = document.createElementNS(svgns,'mpath');
-  mpathRef.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href','#networkPath');
+  // moving arrow on top — polygon with animateMotion
+  const arrowPoly = document.createElementNS(svgns, 'polygon');
+  arrowPoly.setAttribute('points', '0,0 0,6 9,3'); arrowPoly.setAttribute('fill', '#ff6b6b');
+  const animateMotion = document.createElementNS(svgns, 'animateMotion');
+  animateMotion.setAttribute('dur', '3.6s');
+  animateMotion.setAttribute('repeatCount', 'indefinite');
+  animateMotion.setAttribute('rotate', 'auto');
+  const mpathRef = document.createElementNS(svgns, 'mpath');
+  // link the path id we created earlier
+  mpathRef.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', '#' + motionPath.getAttribute('id'));
   animateMotion.appendChild(mpathRef);
-  poly.appendChild(animateMotion);
-  arrowGroup.appendChild(poly);
-  svg.appendChild(arrowGroup);
+  arrowPoly.appendChild(animateMotion);
+  svg.appendChild(arrowPoly);
 
-  // append to terminal
   wrap.appendChild(svg);
   cmdBody.appendChild(wrap);
   cmdBody.scrollTop = cmdBody.scrollHeight;
 
-  // store svgContainer reference so clones/teleport/inject can use same coordinate system
+  // remember svg container
   svgContainer = svg;
   svgViewBox = { w: 240, h: 80 };
 
-  // Enable cursor tracking within this SVG for 'cursor' inject mode
-  svgContainer.addEventListener('mousemove', function(ev){
+  // attach mousemove for cursor mode tracking
+  svgContainer.addEventListener('mousemove', function (ev) {
     const rect = svgContainer.getBoundingClientRect();
     const x = ((ev.clientX - rect.left) / rect.width) * svgViewBox.w;
     const y = ((ev.clientY - rect.top) / rect.height) * svgViewBox.h;
     lastCursorPos = { x: x, y: y };
   });
-}
 
-/* control command:
-   - requires listenDone true
-   - activates controlActive flag
-*/
-function cmd_control(){
-  if(!listenDone){
-    appendLine('Control denied — run listen first');
-    return;
-  }
-  if(controlActive){
-    appendLine('Control already active');
-    return;
-  }
-  controlActive = true;
-  appendLine('[CONTROL MODE ENGAGED]');
-  appendLine('(You may now spawn clones and use inject/teleport)');
-}
-
-/* spawn clone:
-   - requires controlActive true
-   - creates CLONE_COUNT clones in the same svgContainer as network visual
-   - clones animate for CLONE_DURATION ms; inject mode affects motion dynamically
-*/
-function cmd_spawn_clone(){
-  if(!controlActive){
-    appendLine('Spawn clone denied — control not active');
-    return;
-  }
-  if(!svgContainer){
-    appendLine('No network visual present — run listen first');
-    return;
-  }
-  if(clonesActive){
-    appendLine('Clones already active (wait until the current sequence finishes)');
-    return;
-  }
-
-  appendLine('> Spawning clones (detailed sequence) - running ' + (CLONE_DURATION/1000) + 's', 'cmd-echo');
-
-  // create a container group inside svg for clones
-  const svgns = "http://www.w3.org/2000/svg";
-  const cloneLayer = document.createElementNS(svgns,'g');
-  cloneLayer.setAttribute('id','cloneLayer_' + Date.now());
-  svgContainer.appendChild(cloneLayer);
-
-  cloneObjects = []; // reset
-  for(let i=0;i<CLONE_COUNT;i++){
-    const c = document.createElementNS(svgns,'circle');
-    // start clones at target location at right end (approx x=212,y=24 in viewBox)
-    const startX = 212 + (Math.random()-0.5)*6;
-    const startY = 24 + (Math.random()-0.5)*6;
-    c.setAttribute('cx', startX);
-    c.setAttribute('cy', startY);
-    c.setAttribute('r', 3.2);
-    c.setAttribute('fill', '#ff6b6b');
-    c.setAttribute('opacity','0.98');
-    cloneLayer.appendChild(c);
-
-    const obj = {
-      el: c,
-      vx: (Math.random()-0.5)*0.6,
-      vy: (Math.random()-0.5)*0.4,
-      startX: startX,
-      startY: startY,
-      targetX: 36,   // left computer area as default pathfinding target
-      targetY: 24,
-      id: 'clone-'+i
-    };
-    cloneObjects.push(obj);
-  }
-
-  clonesActive = true;
-  const startTime = Date.now();
-
-  // per-frame animate function that respects currentInjectMode dynamically
-  function animateFrame(){
-    const tNow = Date.now();
-    const elapsed = tNow - startTime;
-    const norm = Math.min(1, elapsed / CLONE_DURATION); // 0..1
-
-    for(let i=0;i<cloneObjects.length;i++){
-      const c = cloneObjects[i];
-      let cx = parseFloat(c.el.getAttribute('cx'));
-      let cy = parseFloat(c.el.getAttribute('cy'));
-
-      // Mode behaviors:
-      if(currentInjectMode === 'random'){
-        // jitter + slow drift leftwards over time
-        const jitterX = (Math.sin((elapsed/200)+i) * 8) * (1 - norm);
-        const jitterY = (Math.cos((elapsed/300)+i) * 6) * (1 - norm);
-        const baseX = c.startX - (160 * norm); // move left across duration
-        const baseY = c.startY + Math.sin((i + norm)*6) * 2;
-        cx = baseX + jitterX;
-        cy = baseY + jitterY;
-      } else if(currentInjectMode === 'pathfinding'){
-        // ease from start to target
-        const ease = 1 - Math.pow(1 - norm, 3); // easeOutCubic
-        const nx = c.startX + (c.targetX - c.startX) * ease;
-        const ny = c.startY + (c.targetY - c.startY) * ease + Math.sin((i+norm)*6) * 1.5;
-        cx = nx;
-        cy = ny;
-      } else if(currentInjectMode === 'cursor'){
-        // move towards lastCursorPos (smoothed by ease)
-        const tx = lastCursorPos.x || c.targetX;
-        const ty = lastCursorPos.y || c.targetY;
-        const ease2 = 1 - Math.pow(1 - norm, 2);
-        const nx = c.startX + (tx - c.startX) * ease2;
-        const ny = c.startY + (ty - c.startY) * ease2;
-        cx = nx;
-        cy = ny;
-      }
-
-      // set new coordinates
-      c.el.setAttribute('cx', cx);
-      c.el.setAttribute('cy', cy);
-    }
-
-    // print verbose telemetry a few times during sequence (keeps logs long)
-    if(Math.floor(elapsed / 900) !== Math.floor((elapsed - 40) / 900)){
-      appendLine('clone telemetry update time=' + Math.floor(elapsed) + 'ms');
-    }
-
-    if(elapsed < CLONE_DURATION && clonesActive){
-      // request next frame
-      requestAnimationFrame(animateFrame);
-    } else {
-      // done
-      clonesActive = false;
-      appendLine('clone sequence complete - ' + (CLONE_DURATION/1000) + 's elapsed');
-      appendLine('(clones spawned and remain at final positions; use inject to change behavior for next spawn)');
-    }
-  }
-
-  // start animation
-  requestAnimationFrame(animateFrame);
-}
-
-/* cmd_inject: set injection mode and immediately update active clone behavior */
-function cmd_inject(arg){
-  if(!controlActive){
-    appendLine('Inject denied — control not active');
-    return;
-  }
-  if(!arg){
-    appendLine('Specify inject mode: random pathfinding cursor');
-    return;
-  }
-  const mode = arg.trim().toLowerCase();
-  if(mode !== 'random' && mode !== 'pathfinding' && mode !== 'cursor'){
-    appendLine('Unknown inject mode ' + arg + ' - valid: random, pathfinding, cursor');
-    return;
-  }
-  currentInjectMode = mode;
-  appendLine('inject mode set to ' + currentInjectMode);
-  // immediate effect: if clones currently running they will adapt on next frame because animateFrame uses currentInjectMode
-  if(clonesActive){
-    appendLine('(Active clones will adopt the new mode immediately)');
-  }
-  // for cursor mode, instruct user to move mouse inside the network visual (svg) to set live target
-  if(mode === 'cursor'){
-    appendLine('(move your cursor inside the network visual to direct clones)');
-  }
-}
-
-/* teleport:
-   - requires controlActive true
-   - simulates teleport by moving all clones instantly (or via animated particle)
-*/
-function cmd_teleport(){
-  if(!controlActive){
-    appendLine('Teleport denied — control not active');
-    return;
-  }
-  if(!cloneObjects || cloneObjects.length === 0){
-    appendLine('No clones present to teleport');
-    return;
-  }
-
-  appendLine('> Establishing teleport transfer', 'cmd-echo');
-
-  // create a small teleport particle in svg that moves from target to left (user)
-  if(svgContainer){
-    const svgns = "http://www.w3.org/2000/svg";
-    const part = document.createElementNS(svgns,'circle');
-    part.setAttribute('r','3.5'); part.setAttribute('fill','#ff6b6b'); part.setAttribute('opacity','0.98');
-    // start at target location ~ (212,24)
-    part.setAttribute('cx','212'); part.setAttribute('cy','24');
-    svgContainer.appendChild(part);
-
-    // animate via JS to move along a reverse path
-    const duration = 2200;
-    const start = Date.now();
-    const pathPoints = [
-      {x:212,y:24},
-      {x:160,y:30},
-      {x:110,y:26},
-      {x:36,y:24}
-    ];
-    function lerp(a,b,t){ return a + (b-a)*t; }
-    function animatePart(){
-      const now = Date.now(); const elapsed = now - start;
-      const t = Math.min(1, elapsed / duration);
-      // simple multi-segment interpolation
-      if(t < 1){
-        // map t from 0..1 onto path segments
-        const segCount = pathPoints.length - 1;
-        const segT = t * segCount;
-        const segIdx = Math.min(segCount-1, Math.floor(segT));
-        const localT = segT - segIdx;
-        const p0 = pathPoints[segIdx];
-        const p1 = pathPoints[segIdx+1];
-        const nx = lerp(p0.x, p1.x, localT);
-        const ny = lerp(p0.y, p1.y, localT);
-        part.setAttribute('cx', nx);
-        part.setAttribute('cy', ny);
-        requestAnimationFrame(animatePart);
-      } else {
-        // finished - remove particle and "transfer complete"
-        svgContainer.removeChild(part);
-        appendLine('transfer complete');
-      }
-    }
-    requestAnimationFrame(animatePart);
-  }
-
-  // optionally relocate clones to random nearby positions to simulate "teleport delivered"
-  for(let i=0;i<cloneObjects.length;i++){
-    const c = cloneObjects[i];
-    const nx = c.el.getAttribute('cx') * 1; // current
-    const ny = c.el.getAttribute('cy') * 1;
-    // nudge clones a bit
-    const rx = nx + (Math.random()-0.5) * 20;
-    const ry = ny + (Math.random()-0.5) * 12;
-    c.el.setAttribute('cx', rx);
-    c.el.setAttribute('cy', ry);
-  }
-}
-
-/* Helper: spawn many clones and keep them responsive to subsequent inject commands
-   (This is alias of cmd_spawn_clone but we maintain explicit name for clarity)
-*/
-function cmd_spawn_clone(){
-  cmd_spawn_clone_impl();
-}
-/* Internal wrapper kept long-form (non-truncated) that calls the actual spawn routine */
-function cmd_spawn_clone_impl(){
-  // call the main spawn routine defined above (keeps naming long)
-  cmd_spawn_clone();
-}
-
-/* ===========================
-   Input parser - receives typed commands and calls functions
-   =========================== */
-cmdInput.addEventListener('keydown', function(e){
-  if(e.key === 'Enter'){
-    const raw = cmdInput.value.trim();
-    cmdInput.value = '';
-    if(raw.length === 0) return;
-    appendLine('> ' + escapeHtml(raw), 'cmd-echo');
-
-    // tokenization
-    const parts = raw.split(/\s+/);
-    const cmd = parts[0].toLowerCase();
-    const rest = parts.slice(1).join(' ');
-
-    // command routing (explicit, verbose)
-    if(cmd === 'firewall'){
-      cmd_firewall();
-      return;
-    }
-    if(cmd === 'hack'){
-      cmd_hack();
-      return;
-    }
-    if(cmd === 'listen'){
-      cmd_listen();
-      return;
-    }
-    if(cmd === 'control'){
-      cmd_control();
-      return;
-    }
-    if(cmd === 'spawn' && parts[1] && parts[1].toLowerCase() === 'clone'){
-      cmd_spawn_clone_impl();
-      return;
-    }
-    if(cmd === 'spawn' && !parts[1]){
-      // accept 'spawn' as alias for spawn clone
-      cmd_spawn_clone_impl();
-      return;
-    }
-    if(cmd === 'clone'){
-      cmd_spawn_clone_impl();
-      return;
-    }
-    if(cmd === 'inject'){
-      // inject mode expects second token
-      if(!rest){
-        appendLine('Specify inject mode: random pathfinding cursor');
-        return;
-      }
-      cmd_inject(rest);
-      return;
-    }
-    if(cmd === 'teleport'){
-      cmd_teleport();
-      return;
-    }
-    if(cmd === 'help'){
-      appendLine('Available commands', 'cmd-strong');
-      appendLine('- firewall           Engage firewall breaker (must run before hack to succeed)');
-      appendLine('- hack               Run hack sequence (~5s). Requires firewall broken for success');
-      appendLine('- listen             Map network and show visual (run after successful hack)');
-      appendLine('- control            Activate control (available after listen)');
-      appendLine('- spawn clone        Spawn multiple clones (5s animation). Requires control');
-      appendLine('- inject <mode>      Set clone movement mode: random | pathfinding | cursor');
-      appendLine('- teleport           Teleport transfer simulation (requires control/clones)');
-      appendLine('- help               Show this help');
-      return;
-    }
-
-    // unknown command fallback
-    appendLine('Unknown command ' + escapeHtml(raw));
-  }
-});
-
-/* ----------------------------------------------------------------------------
-   Utility: support click-to-set cursor target on latest visual (if present)
-   When user clicks within the SVG visual area, update lastCursorPos in viewBox coords.
-   This ensures cursor mode works by using actual mouse position inside visual.
-   ---------------------------------------------------------------------------- */
-function attachCursorClicksToLatestVisual(){
-  // find most recent visual-wrap svg inside cmdBody
-  const visuals = cmdBody.querySelectorAll('.visual-wrap svg');
-  if(!visuals || visuals.length === 0) return;
-  const latest = visuals[visuals.length - 1];
-  if(!latest) return;
-
-  latest.addEventListener('click', function(ev){
-    const rect = latest.getBoundingClientRect();
-    // map client coords to viewBox coords
-    const vb = latest.viewBox.baseVal; // typically 0,0,240,80
-    const x = ((ev.clientX - rect.left) / rect.width) * vb.width + vb.x;
-    const y = ((ev.clientY - rect.top) / rect.height) * vb.height + vb.y;
+  // attach click to set explicit cursor target
+  svgContainer.addEventListener('click', function (ev) {
+    const rect = svgContainer.getBoundingClientRect();
+    const x = ((ev.clientX - rect.left) / rect.width) * svgViewBox.w;
+    const y = ((ev.clientY - rect.top) / rect.height) * svgViewBox.h;
     lastCursorPos = { x: x, y: y };
     appendLine('cursor target set x=' + Math.round(x) + ' y=' + Math.round(y));
   });
 }
 
-/* Call attachCursorClicks periodically after creating visuals so clicks work */
-const attachCursorTimer = setInterval(function(){
-  attachCursorClicksToLatestVisual();
-}, 800);
+/* CONTROL
+   - must run after listen is complete
+   - allows spawn clone and inject to operate
+*/
+function cmd_control() {
+  if (!listenDone) {
+    appendLine('Control denied — run listen to map network first');
+    return;
+  }
+  if (controlActive) {
+    appendLine('Control already active');
+    return;
+  }
+  controlActive = true;
+  appendLine('[CONTROL MODE ENGAGED]');
+  appendLine('(spawn clone, inject, teleport now available)');
+}
+
+/* SPAWN CLONE (core of the system)
+   - must be called when controlActive === true
+   - spawns CLONE_COUNT clones at the target position and animates them for CLONE_DURATION ms
+   - movement responds live to currentInjectMode variable (so inject commands issued later affect active clones)
+   - animation uses requestAnimationFrame (no recursion)
+*/
+function cmd_spawn_clone() {
+  if (!controlActive) {
+    appendLine('Spawn clone denied — control not active');
+    return;
+  }
+  if (!svgContainer) {
+    appendLine('No network visual present — run listen first');
+    return;
+  }
+  if (clonesActive) {
+    appendLine('Clones already active (wait until current sequence finishes)');
+    return;
+  }
+
+  appendLine('> Spawning clones (detailed sequence)', 'cmd-echo');
+
+  // create a layer group in the svg to hold clones
+  const svgns = "http://www.w3.org/2000/svg";
+  const layer = document.createElementNS(svgns, 'g');
+  const layerId = 'cloneLayer_' + Date.now();
+  layer.setAttribute('id', layerId);
+  svgContainer.appendChild(layer);
+
+  // prepare clones meta objects
+  cloneObjects = [];
+  for (let i = 0; i < CLONE_COUNT; i++) {
+    const c = document.createElementNS(svgns, 'circle');
+    // starting at target approximate coords (rightmost)
+    const startX = 212 + (Math.random() - 0.5) * 6;
+    const startY = 24 + (Math.random() - 0.5) * 6;
+    c.setAttribute('cx', startX);
+    c.setAttribute('cy', startY);
+    c.setAttribute('r', 3.2);
+    c.setAttribute('fill', '#ff6b6b');
+    c.setAttribute('opacity', '0.98');
+    layer.appendChild(c);
+
+    const obj = {
+      el: c,
+      startX: startX,
+      startY: startY,
+      // used by random mode for small jitter
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (Math.random() - 0.5) * 0.4,
+      // target if in pathfinding mode
+      targetX: 36,
+      targetY: 24,
+      id: 'clone-' + i
+    };
+    cloneObjects.push(obj);
+  }
+
+  clonesActive = true;
+  const beginTime = Date.now();
+
+  // animateFrame updates clones positions each frame based on currentInjectMode
+  function animateFrame() {
+    const now = Date.now();
+    const elapsed = now - beginTime;
+    const norm = Math.min(1, elapsed / CLONE_DURATION); // normalized 0..1
+
+    // update each clone
+    for (let i = 0; i < cloneObjects.length; i++) {
+      const c = cloneObjects[i];
+      let cx = parseFloat(c.el.getAttribute('cx'));
+      let cy = parseFloat(c.el.getAttribute('cy'));
+
+      if (currentInjectMode === 'random') {
+        // random wandering with drift leftwards
+        const jitterX = (Math.sin((elapsed / 180) + i) * 8) * (1 - norm);
+        const jitterY = (Math.cos((elapsed / 240) + i) * 6) * (1 - norm);
+        const baseX = c.startX - (160 * norm); // left drift across duration
+        const baseY = c.startY + Math.sin((i + norm) * 6) * 2;
+        cx = baseX + jitterX;
+        cy = baseY + jitterY;
+
+      } else if (currentInjectMode === 'pathfinding') {
+        // ease from start to target (easeOutCubic)
+        const u = 1 - Math.pow(1 - norm, 3);
+        const nx = c.startX + (c.targetX - c.startX) * u;
+        const ny = c.startY + (c.targetY - c.startY) * u + Math.sin((i + norm) * 6) * 1.5;
+        cx = nx;
+        cy = ny;
+
+      } else if (currentInjectMode === 'cursor') {
+        // move towards lastCursorPos (smoothed)
+        const tx = lastCursorPos.x || c.targetX;
+        const ty = lastCursorPos.y || c.targetY;
+        const u2 = 1 - Math.pow(1 - norm, 2);
+        const nx = c.startX + (tx - c.startX) * u2;
+        const ny = c.startY + (ty - c.startY) * u2;
+        cx = nx;
+        cy = ny;
+      }
+
+      c.el.setAttribute('cx', cx);
+      c.el.setAttribute('cy', cy);
+    }
+
+    // print verbose telemetry periodically for long-form logs
+    if (Math.floor(elapsed / 900) !== Math.floor((elapsed - 40) / 900)) {
+      appendLine('clone telemetry update t=' + Math.floor(elapsed) + 'ms');
+    }
+
+    if (elapsed < CLONE_DURATION && clonesActive) {
+      requestAnimationFrame(animateFrame);
+    } else {
+      // sequence ends
+      clonesActive = false;
+      appendLine('clone sequence complete - ' + (CLONE_DURATION / 1000) + 's elapsed');
+      appendLine('(clones spawned and remain at final positions; use inject for next spawn)');
+      // keep clones in place (do not remove) so user can inspect; removal could be added
+      // but leave them to show final positions
+    }
+  }
+
+  // start the animation loop
+  requestAnimationFrame(animateFrame);
+}
+
+/* cmd_inject
+   - set current inject mode; active clone animation picks up the new mode immediately
+*/
+function cmd_inject(arg) {
+  if (!controlActive) {
+    appendLine('Inject denied — control not active');
+    return;
+  }
+  if (!arg) {
+    appendLine('Specify inject mode: random pathfinding cursor');
+    return;
+  }
+  const mode = arg.trim().toLowerCase();
+  if (mode !== 'random' && mode !== 'pathfinding' && mode !== 'cursor') {
+    appendLine('Unknown inject mode ' + arg + ' - valid: random, pathfinding, cursor');
+    return;
+  }
+  currentInjectMode = mode;
+  appendLine('inject mode set to ' + currentInjectMode);
+  if (clonesActive) appendLine('(Active clones will adopt the new mode immediately)');
+  if (mode === 'cursor') appendLine('(Move your mouse inside the network visual to direct clones)');
+}
+
+/* cmd_teleport
+   - simple visual teleport: animates a particle along a reverse path and nudges clone positions
+*/
+function cmd_teleport() {
+  if (!controlActive) {
+    appendLine('Teleport denied — control not active');
+    return;
+  }
+  if (!svgContainer) {
+    appendLine('No visual present — run listen first');
+    return;
+  }
+  appendLine('> Establishing teleport transfer', 'cmd-echo');
+
+  // make particle
+  const svgns = "http://www.w3.org/2000/svg";
+  const particle = document.createElementNS(svgns, 'circle');
+  particle.setAttribute('r', '3.5'); particle.setAttribute('fill', '#ff6b6b'); particle.setAttribute('opacity', '0.98');
+  particle.setAttribute('cx', 212); particle.setAttribute('cy', 24);
+  svgContainer.appendChild(particle);
+
+  const duration = 2400;
+  const start = Date.now();
+  const pathPoints = [
+    { x: 212, y: 24 },
+    { x: 160, y: 30 },
+    { x: 110, y: 26 },
+    { x: 36, y: 24 }
+  ];
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  (function animateParticle() {
+    const now = Date.now();
+    const elapsed = now - start;
+    const t = Math.min(1, elapsed / duration);
+    const segCount = pathPoints.length - 1;
+    const segT = t * segCount;
+    const segIdx = Math.min(segCount - 1, Math.floor(segT));
+    const localT = segT - segIdx;
+    const p0 = pathPoints[segIdx];
+    const p1 = pathPoints[segIdx + 1];
+    const nx = lerp(p0.x, p1.x, localT);
+    const ny = lerp(p0.y, p1.y, localT);
+    particle.setAttribute('cx', nx);
+    particle.setAttribute('cy', ny);
+    if (t < 1) {
+      requestAnimationFrame(animateParticle);
+    } else {
+      // cleanup particle
+      if (particle.parentNode) particle.parentNode.removeChild(particle);
+      appendLine('transfer complete');
+    }
+  })();
+
+  // nudge clones slightly to simulate "delivery"
+  for (let i = 0; i < cloneObjects.length; i++) {
+    const c = cloneObjects[i];
+    const cx = parseFloat(c.el.getAttribute('cx'));
+    const cy = parseFloat(c.el.getAttribute('cy'));
+    const nx = cx + (Math.random() - 0.5) * 16;
+    const ny = cy + (Math.random() - 0.5) * 10;
+    c.el.setAttribute('cx', nx);
+    c.el.setAttribute('cy', ny);
+  }
+}
 
 /* --------------------------
-   Small housekeeping on unload
+   Input handling and command router
+   - verbose mapping, long-form error messages
    -------------------------- */
-window.addEventListener('beforeunload', function(){
-  if(progressInterval) clearInterval(progressInterval);
-  if(hackIntervalRef) clearInterval(hackIntervalRef);
-  clearInterval(attachCursorTimer);
+cmdInput.addEventListener('keydown', function (e) {
+  if (e.key === 'Enter') {
+    const raw = cmdInput.value.trim();
+    cmdInput.value = '';
+    if (raw.length === 0) return;
+    appendLine('> ' + escapeHtml(raw), 'cmd-echo');
+
+    // parse command and args
+    const tokens = raw.split(/\s+/);
+    const command = tokens[0].toLowerCase();
+    const args = tokens.slice(1);
+
+    // explicit command routing
+    if (command === 'firewall') {
+      cmd_firewall();
+      return;
+    }
+    if (command === 'hack') {
+      cmd_hack();
+      return;
+    }
+    if (command === 'listen') {
+      cmd_listen();
+      return;
+    }
+    if (command === 'control') {
+      cmd_control();
+      return;
+    }
+    if (command === 'spawn' && args[0] && args[0].toLowerCase() === 'clone') {
+      cmd_spawn_clone();
+      return;
+    }
+    if (command === 'spawn' && !args[0]) {
+      // accept 'spawn' as alias for spawn clone
+      cmd_spawn_clone();
+      return;
+    }
+    if (command === 'clone') {
+      cmd_spawn_clone();
+      return;
+    }
+    if (command === 'inject') {
+      const m = args.join(' ').trim();
+      if (!m) {
+        appendLine('Specify inject mode: random pathfinding cursor');
+        return;
+      }
+      cmd_inject(m);
+      return;
+    }
+    if (command === 'teleport') {
+      cmd_teleport();
+      return;
+    }
+    if (command === 'help') {
+      // long help output
+      appendLine('Available commands', 'cmd-strong');
+      appendLine('- firewall        Engage firewall breaker (must run before hack to succeed)');
+      appendLine('- hack            Run hack sequence (~5s). If firewall active result is ACCESS DENIED');
+      appendLine('- listen          Discover target and display visual (run after successful hack)');
+      appendLine('- control         Engage control mode (enabled after listen)');
+      appendLine('- spawn clone     Spawn multiple clone entities (5s animation). Requires control');
+      appendLine('- inject <mode>   Set movement injection mode for clones. modes: random pathfinding cursor');
+      appendLine('- teleport        Teleport simulation between target and user');
+      appendLine('- help            Show this help (verbose)');
+      return;
+    }
+
+    // default unknown command
+    appendLine('Unknown command ' + escapeHtml(raw));
+  }
 });
 
-/* End of JS */
+/* --------------------------
+   Cursor support & attach click to latest visual wrapper
+   - Periodically attach click listener to the latest visual so user can click to set a target
+   -------------------------- */
+function attachCursorClicksToLatestVisual() {
+  const visuals = cmdBody.querySelectorAll('.visual-wrap svg');
+  if (!visuals || visuals.length === 0) return;
+  const latest = visuals[visuals.length - 1];
+  if (!latest) return;
+
+  // Avoid attaching multiple identical handlers: use a property flag
+  if (latest.__hasCursorClick) return;
+  latest.__hasCursorClick = true;
+
+  latest.addEventListener('click', function (ev) {
+    const rect = latest.getBoundingClientRect();
+    const vb = latest.viewBox.baseVal || { x: 0, y: 0, width: 240, height: 80 };
+    const x = ((ev.clientX - rect.left) / rect.width) * vb.width + vb.x;
+    const y = ((ev.clientY - rect.top) / rect.height) * vb.height + vb.y;
+    lastCursorPos = { x: x, y: y };
+    appendLine('cursor target set x=' + Math.round(x) + ' y=' + Math.round(y));
+  });
+
+  // also support mousemove to continually update lastCursorPos for 'cursor' mode
+  latest.addEventListener('mousemove', function (ev) {
+    const rect = latest.getBoundingClientRect();
+    const vb = latest.viewBox.baseVal || { x: 0, y: 0, width: 240, height: 80 };
+    const x = ((ev.clientX - rect.left) / rect.width) * vb.width + vb.x;
+    const y = ((ev.clientY - rect.top) / rect.height) * vb.height + vb.y;
+    lastCursorPos = { x: x, y: y };
+  });
+}
+
+// Periodically try to attach cursor handlers to newly appended visuals
+const attachCursorInterval = setInterval(function () {
+  attachCursorClicksToLatestVisual();
+}, 700);
+
+/* --------------------------
+   Clean up on page unload
+   -------------------------- */
+window.addEventListener('beforeunload', function () {
+  if (progressTimerRef) clearInterval(progressTimerRef);
+  if (hackIntervalRef) clearInterval(hackIntervalRef);
+  clearInterval(attachCursorInterval);
+});
+
+/* End of script */
 </script>
 </body>
 </html>
