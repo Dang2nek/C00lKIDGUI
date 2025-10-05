@@ -270,7 +270,6 @@
 
   function showCMD(){
     if(!mainLoaded){
-      // brief visual feedback: flash main progress text
       const orig = mainProgressText.textContent;
       mainProgressText.textContent = 'Terminal locked — initializing...';
       mainProgressText.style.color = 'rgba(255,120,120,1)';
@@ -297,10 +296,10 @@
     }
   }
 
-  // Generate a unique IP starting with 41.x.y.z within this session (does NOT guarantee global uniqueness)
-  function genUnique41IP(){
+  // Generate a unique IP starting with 125.x.y.z within this session (does NOT guarantee global uniqueness)
+  function genUnique125IP(){
     for(let attempts=0; attempts<2000; attempts++){
-      const a = 41;
+      const a = 125;
       const b = Math.floor(Math.random()*256);
       const c = Math.floor(Math.random()*256);
       const d = Math.floor(Math.random()*254) + 1; // 1..254
@@ -311,7 +310,7 @@
       }
     }
     // fallback
-    const fallback = `41.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*254)+1}`;
+    const fallback = `125.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*254)+1}`;
     generatedIPs.add(fallback);
     return fallback;
   }
@@ -340,7 +339,7 @@
   ];
 
   // run fake hack: when firewallBroken==false -> ACCESS DENIED (as before)
-  // when firewallBroken==true -> print target ip: 41.x.y.z (unique within page session)
+  // when firewallBroken==true -> print target ip: 125.x.y.z (unique within page session)
   function runFakeHack(){
     if(runningHack) return;
     runningHack = true;
@@ -363,8 +362,8 @@
           appendLine('');
           appendLine('<span class="accessDenied">ACCESS DENIED</span>');
         } else {
-          // success: output unique ip starting with 41.
-          const ip = genUnique41IP();
+          // success: output unique ip starting with 125.
+          const ip = genUnique125IP();
           appendLine('');
           appendLine('<strong>target ip: ' + ip + '</strong>');
         }
