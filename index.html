@@ -48,8 +48,7 @@
   }
   .sub {
     color:var(--muted);
-    margin-bottom:14px;
-    min-height:20px;
+    margin-bottom:22px;
   }
 
   .big {
@@ -59,7 +58,11 @@
     padding:18px;
     border-radius:10px;
     border:1px solid rgba(255,255,255,0.02);
-    min-height:48px;
+    min-height:80px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
   }
 
   .hint {
@@ -68,31 +71,29 @@
     font-size:13px;
   }
 
-  /* progress under the "enable terminal.." (main page) */
-  .mainProgress {
-    margin-top:10px;
-    width:80%;
-    max-width:720px;
-    margin-left:auto;
-    margin-right:auto;
+  /* Progress bar inside big box */
+  #mainProgressArea {
+    width: 80%;
+    height: 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 12px;
+    background: rgba(255,255,255,0.02);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
   }
-  .mainProgressBar {
-    background: rgba(255,255,255,0.03);
-    height:10px;
-    border-radius:8px;
-    overflow:hidden;
-    border:1px solid rgba(255,255,255,0.02);
+  #mainProgressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--red), var(--red-deep));
+    transition: width 0.1s linear;
   }
-  .mainProgressBar > div {
-    height:100%;
-    width:0%;
-    background: linear-gradient(90deg, rgba(255,80,80,0.7), rgba(255,0,0,0.9));
-    transition: width 140ms linear;
-  }
-  .mainProgressText {
-    margin-top:6px;
-    font-size:13px;
-    color:rgba(255,255,255,0.7);
+  #mainProgressText {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
   }
 
   /* Fake terminal overlay */
@@ -137,16 +138,15 @@
 
   #cmdBody {
     padding:14px;
-    height: calc(100% - 140px);
+    height: calc(100% - 110px);
     overflow:auto;
     white-space:pre-wrap;
     font-size:14px;
     line-height:1.45;
-    background: linear-gradient(180deg, rgba(255,255,255,0.002), rgba(0,0,0,0));
   }
 
   #cmdInputWrap{
-    padding:10px 14px 10px 14px;
+    padding:10px 14px 18px 14px;
     border-top:1px solid rgba(255,0,0,0.03);
     display:flex;
     gap:8px;
@@ -168,7 +168,6 @@
     font-size:14px;
   }
 
-  /* ACCESS DENIED big */
   .accessDenied {
     display:block;
     margin-top:8px;
@@ -178,9 +177,6 @@
     text-shadow: 0 0 18px rgba(255,0,0,0.18);
     letter-spacing:2px;
   }
-
-  /* small helper */
-  .kbd { background:rgba(255,255,255,0.04); padding:2px 6px; border-radius:6px; font-size:12px; color:var(--muted); }
 
   @media (max-width:640px){
     #fakeCMD { top:4vh; left:3vw; width:94vw; height:92vh; }
@@ -194,19 +190,14 @@
       <div class="title">WELCOME BACK C00lKID</div>
       <div class="sub">enable terminal..</div>
 
-      <!-- main page loading area (visible immediately when entering page) -->
-      <div class="mainProgress" aria-hidden="false" id="mainProgressArea">
-        <div class="mainProgressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <div class="big">
+        <div id="mainProgressArea">
           <div id="mainProgressFill"></div>
         </div>
-        <div class="mainProgressText" id="mainProgressText">Initializing terminal: 0%</div>
+        <div id="mainProgressText">Initializing terminal...</div>
       </div>
 
-      <div class="big">
-        <!-- intentionally left blank per your request -->
-      </div>
-
-      <div class="hint"></div>
+      <div class="hint">ESC để đóng CMD. (Ctrl+R bị chặn khỏi reload trên trang này.)</div>
     </div>
   </div>
 
@@ -217,10 +208,8 @@
       <div style="font-size:12px;color:rgba(255,255,255,0.12);"> — debug mode</div>
       <button id="cmdClose" aria-label="Close terminal">CLOSE</button>
     </div>
-
     <div id="cmdBody" tabindex="0" aria-live="polite"></div>
-
-    <div id="cmdInputWrap" aria-hidden="true">
+    <div id="cmdInputWrap">
       <div id="cmdPrompt">&gt; </div>
       <input id="cmdInput" autocomplete="off" spellcheck="false" aria-label="Terminal input"/>
     </div>
@@ -228,49 +217,52 @@
 
 <script>
 (function(){
-  // main elements
-  const mainProgressFill = document.getElementById('mainProgressFill');
-  const mainProgressText = document.getElementById('mainProgressText');
-  const mainProgressArea = document.getElementById('mainProgressArea');
-
-  // terminal elements
   const fakeCMD = document.getElementById('fakeCMD');
   const cmdBody = document.getElementById('cmdBody');
   const cmdInput = document.getElementById('cmdInput');
   const cmdClose = document.getElementById('cmdClose');
-  const cmdInputWrap = document.getElementById('cmdInputWrap');
+
+  const mainProgressArea = document.getElementById('mainProgressArea');
+  const mainProgressFill = document.getElementById('mainProgressFill');
+  const mainProgressText = document.getElementById('mainProgressText');
 
   let mainLoaded = false;
   let mainLoadingInterval = null;
 
-  // Start main-page loading immediately when page loads
+  // Start 5s loading
   function startMainLoading(){
     let progress = 0;
+    const duration = 5000; // 5 giây
+    const interval = 100;
+    const steps = duration / interval;
+    const increment = 100 / steps;
+
     mainProgressFill.style.width = '0%';
     mainProgressText.textContent = 'Initializing terminal: 0%';
     mainLoaded = false;
 
     mainLoadingInterval = setInterval(() => {
-      // increment randomly so load feels organic
-      const inc = 8 + Math.floor(Math.random()*18); // 8-25
-      progress = Math.min(100, progress + inc);
+      progress += increment;
+      if(progress > 100) progress = 100;
       mainProgressFill.style.width = progress + '%';
-      mainProgressText.textContent = 'Initializing terminal: ' + progress + '%';
+      mainProgressText.textContent = 'Initializing terminal: ' + Math.floor(progress) + '%';
       mainProgressArea.setAttribute('aria-hidden', progress < 100 ? 'false' : 'true');
       if(progress >= 100){
         clearInterval(mainLoadingInterval);
         mainLoaded = true;
         mainProgressText.textContent = 'Terminal enabled.';
-        // optionally hide the progress bar after a short delay
-        setTimeout(()=> {
-          mainProgressArea.style.display = 'none';
-        }, 700);
+        setTimeout(()=> { mainProgressArea.style.display = 'none'; }, 700);
       }
-    }, 180); // ticks ~180ms
+    }, interval);
   }
 
-  // Append lines to terminal body
-  function appendLine(text, cls){
+  startMainLoading(); // gọi khi load trang
+
+  // Fake CMD
+  let runningHack = false;
+  let hackTimer = null;
+
+  function appendLine(text, cls) {
     const el = document.createElement('div');
     if(cls) el.className = cls;
     el.innerHTML = text;
@@ -278,44 +270,37 @@
     cmdBody.scrollTop = cmdBody.scrollHeight;
   }
 
-  // Show terminal (only allowed if mainLoaded)
   function showCMD(){
-    if(!mainLoaded){
-      // briefly flash message that terminal not ready
-      flashNotReady();
-      return;
-    }
+    if(!mainLoaded) return; // chưa load xong thì ko mở
     fakeCMD.style.display = 'block';
     cmdBody.innerHTML = '';
     appendLine('<span style="color:#ff6b6b">[C00lKID TERMINAL v0.1]</span>');
-    appendLine('Initializing terminal interface...');
-    appendLine('Loading virtual console drivers...');
-    appendLine('Establishing debug channel...');
+    appendLine('Initializing modules...');
+    appendLine('Loading subsystems...');
     appendLine('');
-    // enable input immediately since main load already completed
-    cmdInputWrap.setAttribute('aria-hidden','false');
-    cmdInputWrap.style.pointerEvents = 'auto';
     cmdInput.focus();
-  }
-
-  // brief feedback if user presses Ctrl+R before main load:
-  let flashTimer = null;
-  function flashNotReady(){
-    const origText = mainProgressText.textContent;
-    mainProgressText.textContent = 'Terminal locked — initializing...';
-    mainProgressText.style.color = 'rgba(255,120,120,1)';
-    clearTimeout(flashTimer);
-    flashTimer = setTimeout(()=> {
-      mainProgressText.textContent = origText;
-      mainProgressText.style.color = '';
-    }, 800);
   }
 
   function hideCMD(){
     fakeCMD.style.display = 'none';
+    if(runningHack){
+      runningHack = false;
+      clearInterval(hackTimer);
+    }
   }
 
-  // Fake hack sequence (same as before)
+  window.addEventListener('keydown', (e) => {
+    if(e.ctrlKey && e.key.toLowerCase() === 'r'){
+      e.preventDefault();
+      showCMD();
+    }
+    if(e.key === 'Escape'){
+      hideCMD();
+    }
+  });
+
+  cmdClose.addEventListener('click', hideCMD);
+
   const nonsenseSamples = [
     "Loading kernel module... OK",
     "Resolving vector signature: 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
@@ -338,14 +323,13 @@
     "Overwriting sector 13... done",
     "Triggering ISR: vector 0x" + Math.floor(Math.random()*255).toString(16)
   ];
-  let runningHack = false;
-  let hackTimer = null;
+
   function runFakeHack(){
     if(runningHack) return;
     runningHack = true;
     appendLine('> Executing hack sequence...', 'info');
     let ticks = 0;
-    const maxTicks = 25; // ~25 * 200ms = 5s
+    const maxTicks = 25;
     hackTimer = setInterval(() => {
       const lines = 1 + Math.floor(Math.random()*2);
       for(let i=0;i<lines;i++){
@@ -364,57 +348,22 @@
     }, 200);
   }
 
-  // Events
-  window.addEventListener('keydown', (e) => {
-    // Ctrl+R opens fake terminal, but only after mainLoaded
-    if(e.ctrlKey && e.key.toLowerCase() === 'r'){
-      e.preventDefault();
-      if(mainLoaded){
-        showCMD();
-      } else {
-        flashNotReady();
-      }
-    }
-    // ESC closes terminal
-    if(e.key === 'Escape' && fakeCMD.style.display === 'block'){
-      hideCMD();
-    }
-  });
-
-  cmdClose.addEventListener('click', hideCMD);
-
-  // terminal input handling
-  const cmdInputWrapEl = cmdInputWrap;
   cmdInput.addEventListener('keydown', (e) => {
     if(e.key === 'Enter'){
       const val = cmdInput.value.trim();
       appendLine('&gt; ' + escapeHtml(val));
       cmdInput.value = '';
-      if(!mainLoaded){
-        appendLine('Terminal not ready.');
-        return;
-      }
       if(val.toLowerCase() === 'hack'){
         runFakeHack();
-      } else if(val.length === 0){
-        // noop
-      } else {
+      } else if (val.length > 0){
         appendLine('Unknown command: ' + escapeHtml(val));
       }
-    } else if(e.key === 'Escape'){
-      hideCMD();
     }
   });
 
   function escapeHtml(s){
     return s.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
   }
-
-  // start main loading automatically
-  startMainLoading();
-
-  // expose show/hide if needed
-  window.C00L_fakeCMD = { show: showCMD, hide: hideCMD };
 
 })();
 </script>
