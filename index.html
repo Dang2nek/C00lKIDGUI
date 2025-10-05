@@ -644,7 +644,7 @@ function cmd_teleport(){
    ========================================================================= */
 function cmd_animation_stop_param(obj){
   if (obj !== undefined && obj !== null) {
-    appendLine('Animation stopped for object ' + String(obj));
+    appendLine('Animation stopped for ' + String(obj));
   } else {
     // global stop
     if (svgContainer) {
@@ -653,13 +653,13 @@ function cmd_animation_stop_param(obj){
     }
     animationStopped = true;
     clonesActive = false;
-    appendLine('Animation stopped for all objects');
+    appendLine('Animation stopped for all');
   }
 }
 
 function cmd_destroy_param(obj){
   if (obj !== undefined && obj !== null) {
-    appendLine('Destroyed object ' + String(obj));
+    appendLine('Destroyed ' + String(obj));
   } else {
     // global destroy
     if (svgContainer) {
@@ -671,7 +671,7 @@ function cmd_destroy_param(obj){
     cloneObjects.forEach(o => { try { if (o.el && o.el.parentNode) o.el.parentNode.removeChild(o.el); } catch(e){} });
     cloneObjects = [];
     clonesActive = false;
-    appendLine('Destroyed all objects and reset state');
+    appendLine('Destroyed all and reset state');
   }
 }
 
