@@ -373,6 +373,470 @@
     }, 200);
   }
 
+  // CONTROL simulation: print chaotic lines ~3s then terminate
+  function runControlSimulation(){
+    appendLine('[CONTROL MODE ENGAGED]');
+    let ticks = 0;
+    const maxTicks = 15; // ~3s (15 * 200ms)
+    const controlTimer = setInterval(() => {
+      const idx = Math.floor(Math.random()*nonsenseSamples.length);
+      const text = nonsenseSamples[idx].replace(/\d+/g, () => Math.floor(Math.random()*9999));
+      appendLine(text);
+      ticks++;
+      if(ticks >= maxTicks){
+        clearInterval(controlTimer);
+        appendLine('[CONTROL TERMINATED]');
+        cmdInput.focus();
+      }
+    }, 200);
+  }
+
+  // Command handling: 'hack', 'firewall', 'control'
+  function handleCommand(raw){
+    const cmd = raw.trim().toLowerCase();
+    if(cmd === '') return;
+    appendLine('&gt; ' + escapeHtml(raw));
+    if(cmd === 'hack'){
+      runFakeHack();
+      return;
+    }
+    if(cmd === 'firewall'){
+      if(firewallBroken){
+        appendLine('Firewall already disabled.');
+      } else {
+        firewallBroken = true;
+        appendLine('Firewall breaker engaged. Retry hack.');
+      }
+      return;
+    }
+    if(cmd === 'control'){
+      // only allow control if terminal is ready; it's a simulation anyway
+      runControlSimulation();
+      return;
+    }
+    appendLine('Unknown command: ' + escapeHtml(raw));
+  }
+
+  // key events
+  window.addEventListener('keydown', (e) => {
+    if(e.ctrlKey && e.key.toLowerCase() === 'r'){
+      e.preventDefault();
+      if(!mainLoaded){
+        const orig = mainProgressText.textContent;
+        mainProgressText.textContent = 'Terminal locked — initializing...';
+        mainProgressText.style.color = 'rgba(255,120,120,1)';
+        setTimeout(()=> {
+          mainProgressText.textContent = orig;
+          mainProgressText.style.color = '';
+        }, 700);
+        return;
+      }
+      showCMD();
+    }
+    if(e.key === 'Escape' && fakeCMD.style.display === 'block'){
+      hideCMD();
+    }
+  });
+
+  cmdClose.addEventListener('click', hideCMD);
+
+  cmdInput.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      const val = cmdInput.value;
+      cmdInput.value = '';
+      if(!mainLoaded){
+        appendLine('Terminal not ready.');
+        return;
+      }
+      handleCommand(val);
+    } else if(e.key === 'Escape'){
+      hideCMD();
+    }
+  });
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
+  }
+
+})();
+</script>
+</body>
+</html>
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>C00lGUI</title>
+<style>
+  :root{
+    --bg:#0b0b0b;
+    --panel:#120707;
+    --red:#ff3b3b;
+    --red-deep:#b71c1c;
+    --muted:rgba(255,255,255,0.85);
+    --mono: "Courier New", Courier, monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:
+    radial-gradient(ellipse at center, #0f0f12 0%, #050405 60%), linear-gradient(180deg,#100 0%, #000 100%);
+    color:var(--muted); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  }
+
+  /* Center card */
+  .center {
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .card {
+    width:920px;
+    max-width:95%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:2px solid rgba(255,255,255,0.03);
+    border-radius:14px;
+    padding:34px;
+    text-align:center;
+    box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+  }
+
+  .title {
+    font-size:28px;
+    letter-spacing:1px;
+    color:var(--red-deep);
+    text-shadow: 0 0 18px rgba(255,80,80,0.18);
+    margin:6px 0 8px 0;
+    font-weight:700;
+  }
+  .sub {
+    color:var(--muted);
+    margin-bottom:22px;
+  }
+
+  .big {
+    font-size:20px;
+    color:#fff;
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    padding:18px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.02);
+    min-height:80px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+
+  /* Progress bar inside big box */
+  #mainProgressArea {
+    width: 80%;
+    height: 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 12px;
+    background: rgba(255,255,255,0.02);
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  #mainProgressFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--red), var(--red-deep));
+    transition: width 0.1s linear;
+  }
+  #mainProgressText {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* Fake terminal overlay */
+  #fakeCMD {
+    display:none;
+    position:fixed;
+    top:6vh;
+    left:6vw;
+    width:88vw;
+    height:88vh;
+    max-width:1200px;
+    max-height:900px;
+    background: #070404;
+    border: 3px solid var(--red-deep);
+    box-shadow: 0 30px 120px rgba(183,28,28,0.4);
+    z-index:99999;
+    border-radius:10px;
+    overflow:hidden;
+    font-family: var(--mono);
+    color: var(--red);
+  }
+  #cmdHeader {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 14px;
+    background: linear-gradient(90deg, rgba(255,0,0,0.04), rgba(255,0,0,0.01));
+    border-bottom:1px solid rgba(255,0,0,0.06);
+  }
+  #cmdTitle { font-weight:700; color:var(--red-deep); }
+  #cmdClose {
+    margin-left:auto;
+    background:transparent;
+    border:none;
+    color:var(--red);
+    font-weight:700;
+    cursor:pointer;
+    padding:8px 12px;
+    border-radius:6px;
+  }
+  #cmdClose:hover { background:rgba(255,0,0,0.03); }
+
+  #cmdBody {
+    padding:14px;
+    height: calc(100% - 110px);
+    overflow:auto;
+    white-space:pre-wrap;
+    font-size:14px;
+    line-height:1.45;
+  }
+
+  #cmdInputWrap{
+    padding:10px 14px 18px 14px;
+    border-top:1px solid rgba(255,0,0,0.03);
+    display:flex;
+    gap:8px;
+    align-items:center;
+    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
+  }
+  #cmdPrompt {
+    color:var(--red);
+    font-family:var(--mono);
+    font-size:14px;
+  }
+  #cmdInput {
+    flex:1;
+    background:transparent;
+    border:none;
+    outline:none;
+    color:var(--red);
+    font-family:var(--mono);
+    font-size:14px;
+  }
+
+  .accessDenied {
+    display:block;
+    margin-top:8px;
+    font-weight:900;
+    font-size:36px;
+    color:#ff4d4d;
+    text-shadow: 0 0 18px rgba(255,0,0,0.18);
+    letter-spacing:2px;
+  }
+
+  @media (max-width:640px){
+    #fakeCMD { top:4vh; left:3vw; width:94vw; height:92vh; }
+    .title { font-size:20px; }
+  }
+</style>
+</head>
+<body>
+  <div class="center">
+    <div class="card" role="main" aria-live="polite">
+      <div class="title">WELCOME BACK C00lKID</div>
+      <div class="sub">enable terminal..</div>
+
+      <div class="big">
+        <div id="mainProgressArea">
+          <div id="mainProgressFill"></div>
+        </div>
+        <div id="mainProgressText">Initializing terminal...</div>
+      </div>
+
+      <!-- hint removed -->
+    </div>
+  </div>
+
+  <!-- Fake CMD overlay -->
+  <div id="fakeCMD" role="dialog" aria-modal="true" aria-label="Fake command prompt">
+    <div id="cmdHeader">
+      <div id="cmdTitle">C00lKID TERMINAL</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.12);"> — debug mode</div>
+      <button id="cmdClose" aria-label="Close terminal">CLOSE</button>
+    </div>
+    <div id="cmdBody" tabindex="0" aria-live="polite"></div>
+    <div id="cmdInputWrap">
+      <div id="cmdPrompt">&gt; </div>
+      <input id="cmdInput" autocomplete="off" spellcheck="false" aria-label="Terminal input"/>
+    </div>
+  </div>
+
+<script>
+(function(){
+  const fakeCMD = document.getElementById('fakeCMD');
+  const cmdBody = document.getElementById('cmdBody');
+  const cmdInput = document.getElementById('cmdInput');
+  const cmdClose = document.getElementById('cmdClose');
+
+  const mainProgressArea = document.getElementById('mainProgressArea');
+  const mainProgressFill = document.getElementById('mainProgressFill');
+  const mainProgressText = document.getElementById('mainProgressText');
+
+  let mainLoaded = false;
+  let mainLoadingInterval = null;
+
+  // Start 5s loading (fixed)
+  function startMainLoading(){
+    let progress = 0;
+    const duration = 5000; // 5 seconds
+    const interval = 100; // update every 100ms
+    const steps = duration / interval;
+    const increment = 100 / steps;
+
+    mainProgressFill.style.width = '0%';
+    mainProgressText.textContent = 'Initializing terminal: 0%';
+    mainLoaded = false;
+
+    mainLoadingInterval = setInterval(() => {
+      progress += increment;
+      if(progress > 100) progress = 100;
+      mainProgressFill.style.width = progress + '%';
+      mainProgressText.textContent = 'Initializing terminal: ' + Math.floor(progress) + '%';
+      mainProgressArea.setAttribute('aria-hidden', progress < 100 ? 'false' : 'true');
+      if(progress >= 100){
+        clearInterval(mainLoadingInterval);
+        mainLoaded = true;
+        mainProgressText.textContent = 'Terminal enabled.';
+        setTimeout(()=> { mainProgressArea.style.display = 'none'; }, 700);
+      }
+    }, interval);
+  }
+
+  startMainLoading();
+
+  // Terminal & fake-hack logic
+  let runningHack = false;
+  let hackTimer = null;
+
+  // firewall breaker state + generated passwords set for uniqueness within this page session
+  let firewallBroken = false;
+  const generatedPasswords = new Set();
+
+  function appendLine(text, cls) {
+    const el = document.createElement('div');
+    if(cls) el.className = cls;
+    el.innerHTML = text;
+    cmdBody.appendChild(el);
+    cmdBody.scrollTop = cmdBody.scrollHeight;
+  }
+
+  function showCMD(){
+    if(!mainLoaded){
+      const orig = mainProgressText.textContent;
+      mainProgressText.textContent = 'Terminal locked — initializing...';
+      mainProgressText.style.color = 'rgba(255,120,120,1)';
+      setTimeout(()=> {
+        mainProgressText.textContent = orig;
+        mainProgressText.style.color = '';
+      }, 700);
+      return;
+    }
+    fakeCMD.style.display = 'block';
+    cmdBody.innerHTML = '';
+    appendLine('<span style="color:#ff6b6b">[C00lKID TERMINAL v0.1]</span>');
+    appendLine('Initializing modules...');
+    appendLine('Loading subsystems...');
+    appendLine('');
+    cmdInput.focus();
+  }
+
+  function hideCMD(){
+    fakeCMD.style.display = 'none';
+    if(runningHack){
+      runningHack = false;
+      clearInterval(hackTimer);
+    }
+  }
+
+  // generate a random password and ensure uniqueness in this session
+  function genUniquePassword(len = 12){
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
+    for(let attempts=0; attempts<2000; attempts++){
+      let pw = '';
+      for(let i=0;i<len;i++){
+        pw += chars.charAt(Math.floor(Math.random()*chars.length));
+      }
+      if(!generatedPasswords.has(pw)){
+        generatedPasswords.add(pw);
+        return pw;
+      }
+    }
+    // fallback
+    let fallback = '';
+    for(let i=0;i<len;i++) fallback += chars.charAt(Math.floor(Math.random()*chars.length));
+    generatedPasswords.add(fallback);
+    return fallback;
+  }
+
+  const nonsenseSamples = [
+    "Loading kernel module... OK",
+    "Resolving vector signature: 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
+    "Spawning rogue thread at 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
+    "Buffering entropy... 32%",
+    "Hash collision detected, retrying...",
+    "Allocating virtual page: " + Math.floor(Math.random()*4096),
+    "Patching system call table... done",
+    "Overflowing stack frame... warning",
+    "Decrypting payload chunk 3/8",
+    "Handshake with unknown host established",
+    "Randomizing pointers... OK",
+    "Clearing temp logs",
+    "Flushing CPU cache lines",
+    "Injecting packet to /dev/null",
+    "Kernel panic simulated (test mode)",
+    "Synchronizing with time server... fail",
+    "Forking zombie processes: 7",
+    "Simulating memory leak: +1.2MB",
+    "Overwriting sector 13... done",
+    "Triggering ISR: vector 0x" + Math.floor(Math.random()*255).toString(16)
+  ];
+
+  // run fake hack: when firewallBroken==false -> ACCESS DENIED (as before)
+  // when firewallBroken==true -> print target password: <generated-password> (unique in session)
+  function runFakeHack(){
+    if(runningHack) return;
+    runningHack = true;
+    appendLine('> Executing hack sequence...', 'info');
+    let ticks = 0;
+    const maxTicks = 25; // ~5s
+    hackTimer = setInterval(() => {
+      const lines = 1 + Math.floor(Math.random()*2);
+      for(let i=0;i<lines;i++){
+        const idx = Math.floor(Math.random()*nonsenseSamples.length);
+        const text = nonsenseSamples[idx].replace(/\d+/g, () => Math.floor(Math.random()*9999));
+        appendLine(text);
+      }
+      ticks++;
+      if(ticks >= maxTicks || !runningHack){
+        clearInterval(hackTimer);
+        runningHack = false;
+
+        if(!firewallBroken){
+          appendLine('');
+          appendLine('<span class="accessDenied">ACCESS DENIED</span>');
+        } else {
+          // success: output unique target password
+          const pw = genUniquePassword(12);
+          appendLine('');
+          appendLine('<strong>target password: ' + pw + '</strong>');
+        }
+        cmdInput.focus();
+      }
+    }, 200);
+  }
+
   // Command handling: add 'firewall' command to break firewall
   function handleCommand(raw){
     const cmd = raw.trim().toLowerCase();
