@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>WELCOME BACK C00lKID</title>
+<title>C00lGUI</title>
 <style>
   :root{
     --bg:#0b0b0b;
@@ -161,15 +161,14 @@
 <body>
   <div class="center">
     <div class="card" role="main" aria-live="polite">
-      <div class="title">WELCOME BACK C00lKID</div>
-      <div class="sub">Bạn đã truy cập vào vùng cấm. Thử nghiệm chức năng hệ thống ảo.</div>
+      <div class="title">C00lGUI</div>
+      <div class="sub">enable terminal..</div>
 
       <div class="big">
-        Chào mừng — đây là trang sau khi bạn nhập mã bí mật.<br>
-        Nhấn <span class="kbd">Ctrl + R</span> để mở trình “CMD” giả màu đỏ. Trong CMD, gõ <code>hack</code> rồi Enter.
+        <!-- removed instructional text as requested -->
       </div>
 
-      <div class="hint">ESC để đóng CMD. (Ctrl+R bị chặn khỏi reload trên trang này.)</div>
+      <div class="hint"></div>
     </div>
   </div>
 
@@ -206,13 +205,17 @@
     cmdBody.scrollTop = cmdBody.scrollHeight;
   }
 
-  // Show fake CMD
+  // Show fake CMD (with a few init lines)
   function showCMD(){
     fakeCMD.style.display = 'block';
     cmdBody.innerHTML = '';
     appendLine('<span style="color:#ff6b6b">[C00lKID TERMINAL v0.1]</span>');
-    appendLine('Type "hack" and press Enter to run test exploit sequence.');
-    appendLine('');
+    // initialization lines
+    appendLine('Initializing terminal interface...');
+    appendLine('Loading virtual console drivers...');
+    appendLine('Establishing debug channel...');
+    appendLine('Terminal enabled.');
+    appendLine(''); // blank line
     cmdInput.focus();
   }
 
