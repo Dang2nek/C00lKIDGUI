@@ -3,138 +3,88 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>C00lGUI — Full Long Edition</title>
+<title>C00lGUI — Full Simulator</title>
 <style>
 /* =========================================================================
-   THEME + LAYOUT
-   Extensive explicit CSS block to make the file long and explicit.
-   ========================================================================= */
+   STYLE: Visual theme, terminal layout, progress bar, responsive tweaks
+   ========================================================================== */
 :root{
-  --bg:#050405;
-  --card:#0b0b0b;
-  --accent:#ff6b6b;
+  --bg:#0b0b0b;
+  --card:#0f0d0d;
   --red:#ff3b3b;
   --red-deep:#b71c1c;
-  --muted:rgba(255,255,255,0.92);
-  --mono:"Courier New", Courier, monospace;
-  --glass: rgba(255,255,255,0.02);
-  --glass-2: rgba(255,255,255,0.01);
+  --accent:#ff6b6b;
+  --muted:rgba(255,255,255,0.9);
+  --mono: "Courier New", Courier, monospace;
 }
-
-* { box-sizing: border-box; }
-html,body { height:100%; margin:0; background:
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:
   radial-gradient(ellipse at center,#0f0f12 0%, #020202 60%),
   linear-gradient(180deg,#060003 0%, #000 100%);
-  color:var(--muted); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
+  color:var(--muted);font-family:Inter, system-ui, -apple-system,"Segoe UI",Roboto,Arial;}
+/* Page card */
+.wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px;}
+.card{
+  width:1100px; max-width:96%;
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border-radius:12px;padding:28px;border:1px solid rgba(255,255,255,0.03);
+  box-shadow:0 30px 90px rgba(0,0,0,0.6); text-align:center;
 }
+.title{font-size:34px;color:var(--red-deep);font-weight:900;margin:0 0 8px 0;text-shadow:0 0 18px rgba(255,80,80,0.12);}
+.sub{color:rgba(255,255,255,0.78);margin-bottom:14px;}
+.enable{display:inline-block;padding:12px 18px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.03);cursor:pointer;}
+.progressOuter{width:86%;height:14px;border-radius:8px;background:rgba(255,255,255,0.02);margin:14px auto;overflow:hidden;border:1px solid rgba(255,255,255,0.02)}
+.progressInner{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--red));transition:width 80ms linear}
 
-/* Page wrapper */
-.wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:28px; }
-
-/* Card container */
-.card {
-  width:1100px;
-  max-width:96%;
-  background: linear-gradient(180deg, var(--glass), var(--glass-2));
-  border-radius:12px;
-  padding:28px;
-  border:1px solid rgba(255,255,255,0.03);
-  box-shadow: 0 30px 90px rgba(0,0,0,0.6);
-  text-align:center;
-  overflow:visible;
+/* Terminal overlay */
+#fakeCMD{
+  display:none; position:fixed; top:6vh; left:6vw;
+  width:88vw; height:88vh; max-width:1280px; max-height:920px;
+  background:#070404; border:3px solid var(--red-deep); border-radius:10px;
+  box-shadow:0 40px 160px rgba(183,28,28,0.35); z-index:99999; overflow:hidden;
+  color:var(--red); font-family:var(--mono);
 }
+#cmdHeader{display:flex;align-items:center;gap:12px;padding:12px 16px;background:linear-gradient(90deg, rgba(255,0,0,0.02), rgba(255,0,0,0.01));border-bottom:1px solid rgba(255,0,0,0.04)}
+#cmdTitle{font-weight:900;color:var(--red-deep);font-size:16px}
+#cmdClose{margin-left:auto;background:transparent;border:none;color:var(--red);cursor:pointer;padding:8px 12px;border-radius:6px}
+#cmdClose:hover{background:rgba(255,0,0,0.03)}
+#cmdBody{padding:16px;height:calc(100% - 128px);overflow:auto;white-space:pre-wrap;font-size:14px;line-height:1.45;background:linear-gradient(180deg,#040303 0%, #000 100%)}
+#cmdInputWrap{padding:10px 16px 18px 16px;border-top:1px solid rgba(255,0,0,0.03);display:flex;gap:8px;align-items:center;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00))}
+#cmdPrompt{font-family:var(--mono);font-size:14px;color:var(--red)}
+#cmdInput{flex:1;background:transparent;border:none;outline:none;color:var(--red);font-family:var(--mono);font-size:14px}
 
-/* Title area */
-.title { font-size:34px; color:var(--red-deep); font-weight:900; margin:0 0 6px 0; text-shadow: 0 0 20px rgba(255,80,80,0.14); }
+/* Visual area inside terminal (SVG will be injected) */
+.visual-wrap{margin:12px 0; display:flex; justify-content:center; align-items:center}
+.visual-wrap svg{width:88%;max-width:920px;height:auto;display:block;background:#020202;border-radius:6px;border:1px solid rgba(255,255,255,0.02)}
 
-/* Subtitle */
-.subtitle { font-size:14px; color:rgba(255,255,255,0.78); margin:6px 0 16px 0; }
+/* small helpers */
+.cmd-line{margin:6px 0;font-family:var(--mono);color:var(--red)}
+.cmd-echo{font-weight:600;color:var(--red)}
+.cmd-strong{font-weight:800;color:var(--red)}
+.accessDenied{display:block;margin-top:8px;font-weight:900;font-size:34px;color:#ff4d4d;text-shadow:0 0 18px rgba(255,0,0,0.18);letter-spacing:2px}
+.kbd{background:rgba(255,255,255,0.03);padding:2px 6px;border-radius:6px;font-size:12px;color:var(--muted)}
 
-/* Enable terminal control */
-#enableTerminal { display:inline-block; padding:12px 18px; border-radius:8px; background:transparent; color:var(--muted); cursor:pointer; border:1px solid rgba(255,255,255,0.03); }
-#enableTerminal:focus { outline:none; box-shadow: 0 0 0 8px rgba(255,107,107,0.06); }
-
-/* Loading progress bar */
-.progressOuter { width:88%; max-width:760px; margin:18px auto 6px auto; height:14px; background: rgba(255,255,255,0.02); border-radius:8px; border:1px solid rgba(255,255,255,0.02); overflow:hidden; }
-.progressInner { height:100%; width:0%; background: linear-gradient(90deg,var(--accent),var(--red)); transition: width 80ms linear; }
-
-/* small hint line */
-.hint { color:rgba(255,255,255,0.68); font-size:13px; margin-top:8px; }
-
-/* Fake terminal overlay */
-#fakeCMD {
-  display:none;
-  position:fixed;
-  top:6vh; left:6vw;
-  width:88vw; height:88vh;
-  max-width:1280px; max-height:920px;
-  background:#070404; color:var(--red);
-  border:3px solid var(--red-deep);
-  box-shadow: 0 40px 160px rgba(183,28,28,0.35);
-  z-index:99999; border-radius:10px; overflow:hidden;
-  font-family: var(--mono);
-}
-
-/* Terminal header */
-#cmdHeader { display:flex; gap:12px; align-items:center; padding:12px 16px; background: linear-gradient(90deg, rgba(255,0,0,0.02), rgba(255,0,0,0.01)); border-bottom:1px solid rgba(255,0,0,0.04); }
-#cmdTitle { font-weight:900; color:var(--red-deep); font-size:16px; }
-#cmdClose { margin-left:auto; background:transparent; border:none; color:var(--red); font-weight:700; cursor:pointer; padding:8px 12px; border-radius:6px; }
-#cmdClose:hover { background:rgba(255,0,0,0.03); }
-
-/* Terminal body */
-#cmdBody { padding:16px 18px; height: calc(100% - 140px); overflow:auto; white-space:pre-wrap; font-size:14px; line-height:1.45; color:var(--red); background: linear-gradient(180deg,#040303 0%, #000 100%); }
-
-/* Scrollbar */
-#cmdBody::-webkit-scrollbar { width:12px; height:12px; }
-#cmdBody::-webkit-scrollbar-track { background: rgba(0,0,0,0.15); border-radius:6px; }
-#cmdBody::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(255,59,59,0.18), rgba(183,28,28,0.28)); border-radius:6px; border:2px solid rgba(0,0,0,0.14); }
-
-/* Input row */
-#cmdInputWrap { padding:10px 16px 18px 16px; border-top:1px solid rgba(255,0,0,0.03); display:flex; gap:8px; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); }
-#cmdPrompt { font-family:var(--mono); font-size:14px; color:var(--red); }
-#cmdInput { flex:1; background:transparent; border:none; outline:none; color:var(--red); font-family:var(--mono); font-size:14px; }
-
-/* Visual wrapper for svg */
-.visual-wrap { margin:12px 0; display:flex; justify-content:center; align-items:center; }
-.visual-wrap svg { width:88%; max-width:920px; height:auto; display:block; background:#020202; border-radius:6px; border:1px solid rgba(255,255,255,0.02); }
-
-/* helper classes */
-.cmd-line { margin:6px 0; font-family:var(--mono); color:var(--red); }
-.cmd-echo { font-weight:600; color:var(--red); }
-.cmd-strong { font-weight:800; color:var(--red); }
-.accessDenied { display:block; margin-top:8px; font-weight:900; font-size:34px; color:#ff4d4d; text-shadow:0 0 18px rgba(255,0,0,0.18); letter-spacing:2px; }
-
-kbd { background:rgba(255,255,255,0.03); padding:2px 6px; border-radius:6px; font-family:var(--mono); font-size:12px; color:var(--muted); }
-
-@media (max-width:720px){
-  .card { padding:16px; }
-  .visual-wrap svg { width:100%; }
-  #fakeCMD { top:3vh; left:2vw; width:96vw; height:94vh; }
-}
+@media (max-width:720px){ .card{padding:18px} #fakeCMD{top:3vh;left:2vw;width:96vw;height:94vh} }
 </style>
 </head>
 <body>
-
 <div class="wrap">
   <div class="card" role="main" aria-live="polite">
     <div class="title">WELCOME BACK C00lKID</div>
-    <div class="subtitle">Client-only interactive simulator — verbose edition</div>
-
-    <div id="enableTerminal" role="button" tabindex="0" aria-pressed="false">Enable terminal..</div>
-
-    <div class="progressOuter" style="margin-top:18px;">
+    <div class="sub">Client-only interactive simulator</div>
+    <div id="enableTerminal" class="enable" tabindex="0">Enable terminal.. (or press Ctrl + R)</div>
+    <div class="progressOuter" aria-hidden="false" style="margin-top:18px">
       <div id="progressFill" class="progressInner" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></div>
     </div>
-
-    <div class="hint">Click the text above or press <kbd>Ctrl + R</kbd> after initialization.</div>
+    <div class="hint" style="margin-top:8px">Wait for the progress to reach 100% (5s) before opening the terminal.</div>
   </div>
 </div>
 
-<!-- Fake terminal -->
+<!-- Fake Terminal -->
 <div id="fakeCMD" role="dialog" aria-modal="true" aria-label="C00lKID Terminal">
   <div id="cmdHeader">
     <div id="cmdTitle">C00lKID TERMINAL</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.12);"> — debug & simulation mode</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.12)"> — debug & simulation mode</div>
     <button id="cmdClose" aria-label="Close terminal">CLOSE</button>
   </div>
 
@@ -146,31 +96,35 @@ kbd { background:rgba(255,255,255,0.03); padding:2px 6px; border-radius:6px; fon
   </div>
 </div>
 
-<!-- svg container will be inserted into terminal body when listen runs -->
-<!-- We'll create svg elements programmatically and append into cmdBody -->
-
 <script>
 /* =========================================================================
-   Full long JS implementation — verbose comments and logs included.
-   This file intentionally verbose to match your request for a long full file.
+   FULL SCRIPT — includes all requested commands and features.
+   - Ctrl+R is captured and prevented
+   - Progress 5s initialization
+   - Commands: firewall, hack, listen, control, spawn clone, inject, teleport,
+               animation.stop(), destroy, help
+   - SVG visual, clones move toward static target T
+   - spawn clone removes old clones before spawning
+   - animation.stop() stops animateMotion and clones
+   - destroy() removes visual and resets state
    ========================================================================= */
 
-/* ------------------------
-   Element refs
-   ------------------------ */
-const enableTerminalEl = document.getElementById('enableTerminal');
-const progressFillEl = document.getElementById('progressFill');
+/* ---------------------------
+   DOM refs
+   --------------------------- */
+const enableTerminalBtn = document.getElementById('enableTerminal');
+const progressFill = document.getElementById('progressFill');
 const fakeCMD = document.getElementById('fakeCMD');
 const cmdBody = document.getElementById('cmdBody');
 const cmdInput = document.getElementById('cmdInput');
 const cmdClose = document.getElementById('cmdClose');
 
-/* ------------------------
-   State variables
-   ------------------------ */
+/* ---------------------------
+   State
+   --------------------------- */
 let initialized = false;
-let initTimer = null;
-let loadProgress = 0;
+let initInterval = null;
+let initProgress = 0;
 
 let firewallBroken = false;
 let runningHack = false;
@@ -179,510 +133,422 @@ let hackSucceeded = false;
 let targetPassword = '';
 
 let listenDone = false;
-let svgContainer = null; // will hold the SVG element (visual)
-let svgViewBox = { w:240, h:80 };
+let svgContainer = null; // reference to SVG element
+let svgWrap = null;      // wrapper div
 
 let controlActive = false;
 
-let cloneObjects = []; // { el, x, y, targetX, targetY, vx, vy, id }
+let cloneObjects = []; // meta for clones
 let clonesActive = false;
-let cloneLayer = null; // group element to hold clones
+let cloneLayer = null;
 
 let CLONE_COUNT = 6;
 let CLONE_DURATION = 5000;
 let CLONE_SPEED = 3.0;
 
-let currentInjectMode = 'random'; // random | pathfinding | cursor
-let lastCursorPos = { x:120, y:40 };
+let currentInjectMode = 'random'; // 'random' | 'pathfinding' | 'cursor'
+let lastCursorPos = { x: 120, y: 40 };
 
 let animationStopped = false;
 
-/* ------------------------
-   Utility functions
-   ------------------------ */
+/* ---------------------------
+   Helpers
+   --------------------------- */
 function appendLine(text, cls) {
   const el = document.createElement('div');
   el.className = cls ? 'cmd-line ' + cls : 'cmd-line';
-  // remove colon characters (per earlier request to remove ':')
+  // remove colons per request
   el.innerHTML = String(text).replace(/:/g,'');
   cmdBody.appendChild(el);
   cmdBody.scrollTop = cmdBody.scrollHeight;
 }
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m]); }
 
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; }); }
-
-/* ------------------------
+/* ---------------------------
    Initialization progress (5s)
-   ------------------------ */
-(function initProgress(){
-  const total = 5000;
-  const step = 75;
-  const steps = Math.ceil(total / step);
+   --------------------------- */
+(function startInit() {
+  const totalMs = 5000;
+  const stepMs = 50;
+  const steps = Math.ceil(totalMs / stepMs);
   const inc = 100 / steps;
-  loadProgress = 0;
-  progressFillEl.style.width = '0%';
-  progressFillEl.setAttribute('aria-valuenow','0');
+  initProgress = 0;
+  progressFill.style.width = '0%';
+  progressFill.setAttribute('aria-valuenow','0');
 
-  initTimer = setInterval(()=>{
-    loadProgress = Math.min(100, loadProgress + inc);
-    progressFillEl.style.width = Math.floor(loadProgress) + '%';
-    progressFillEl.setAttribute('aria-valuenow', Math.floor(loadProgress));
-    if(loadProgress >= 100){
-      clearInterval(initTimer);
-      initTimer = null;
+  initInterval = setInterval(() => {
+    initProgress = Math.min(100, initProgress + inc);
+    progressFill.style.width = Math.floor(initProgress) + '%';
+    progressFill.setAttribute('aria-valuenow', Math.floor(initProgress));
+    if (initProgress >= 100) {
+      clearInterval(initInterval);
+      initInterval = null;
       initialized = true;
-      // do not auto-open terminal
     }
-  }, step);
+  }, stepMs);
 })();
 
-/* ------------------------
-   Terminal open/close behavior
-   ------------------------ */
+/* ---------------------------
+   Terminal show/hide and keyboard handling
+   --------------------------- */
 function showTerminal() {
-  if(!initialized) {
-    // small pulse to indicate not ready
-    enableTerminalEl.animate([{ transform: 'scale(0.985)' }, { transform: 'scale(1)' }], { duration: 160 });
+  if (!initialized) {
+    // quick feedback: small pulse
+    enableTerminalBtn.animate([{ transform: 'scale(0.995)' }, { transform: 'scale(1)' }], { duration: 120 });
     return;
   }
   fakeCMD.style.display = 'block';
   cmdBody.innerHTML = '';
   appendLine('<span style="color:#ff7b7b">[C00lKID TERMINAL v0.1]</span>', 'cmd-echo');
-  // do not append instruction lines
   cmdInput.focus();
 }
 
 function hideTerminal() {
   fakeCMD.style.display = 'none';
-  // stop hack if running
-  if(runningHack && hackInterval) {
+  if (runningHack && hackInterval) {
     clearInterval(hackInterval);
     hackInterval = null;
     runningHack = false;
   }
 }
 
-/* Hook events */
-enableTerminalEl.addEventListener('click', showTerminal);
-enableTerminalEl.addEventListener('keydown', function(e){ if(e.key==='Enter' || e.key===' ') { e.preventDefault(); showTerminal(); } });
+/* Click + keyboard hooks */
+enableTerminalBtn.addEventListener('click', showTerminal);
+enableTerminalBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showTerminal(); }});
 cmdClose.addEventListener('click', hideTerminal);
-window.addEventListener('keydown', function(e){
-  if(e.ctrlKey && e.key.toLowerCase() === 'r'){ e.preventDefault(); showTerminal(); }
-  if(e.key === 'Escape') { if(fakeCMD.style.display === 'block') hideTerminal(); }
+
+/* Capture Ctrl+R and prevent reload; open terminal instead */
+window.addEventListener('keydown', e => {
+  if (e.ctrlKey && (e.key === 'r' || e.key === 'R')) {
+    e.preventDefault(); // STOP browser reload
+    showTerminal();
+  }
+  if (e.key === 'Escape') {
+    if (fakeCMD.style.display === 'block') { e.preventDefault(); hideTerminal(); }
+  }
 });
 
-/* ------------------------
-   command: firewall
-   ------------------------ */
+/* ---------------------------
+   Hack sequence
+   --------------------------- */
+const noiseSamples = [
+  "Loading kernel module... OK",
+  "Resolving vector signature 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
+  "Spawning rogue thread at 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
+  "Buffering entropy... 32%",
+  "Hash collision detected, retrying...",
+  "Allocating virtual page " + Math.floor(Math.random()*4096),
+  "Patching system call table... done",
+  "Overflowing stack frame... warning",
+  "Decrypting payload chunk 3/8",
+  "Handshake with unknown host established",
+  "Randomizing pointers... OK",
+  "Clearing temp logs",
+  "Flushing CPU cache lines",
+  "Injecting packet to /dev/null",
+  "Kernel panic simulated (test mode)"
+];
+
 function cmd_firewall() {
-  if(firewallBroken) { appendLine('Firewall breaker already engaged'); return; }
+  if (firewallBroken) { appendLine('Firewall already broken'); return; }
   appendLine('> Engaging firewall breaker', 'cmd-echo');
-  appendLine('Loading modules');
+  appendLine('Loading bypass modules');
   appendLine('Patching ACLs');
-  setTimeout(()=>{
+  setTimeout(() => {
     firewallBroken = true;
-    appendLine('Firewall broken — hack may succeed if executed now');
+    appendLine('Firewall breaker engaged');
   }, 650);
 }
 
-/* ------------------------
-   command: hack
-   - 5s of chaotic output, then either ACCESS DENIED or success
-   ------------------------ */
 function cmd_hack() {
-  if(runningHack) { appendLine('Hack already in progress'); return; }
+  if (runningHack) { appendLine('Hack already running'); return; }
   appendLine('> Executing hack sequence', 'cmd-echo');
   runningHack = true;
-  hackInterval = null;
-  let ticks = 0;
-  const maxTicks = 25;
-  const noise = [
-    'Loading kernel module OK',
-    'Resolving signature 0x' + Math.floor(Math.random()*0xFFFF).toString(16),
-    'Spawning rogue thread',
-    'Buffering entropy 32%',
-    'Hash collision detected retry',
-    'Allocating virtual page 0x' + Math.floor(Math.random()*0xFFFF).toString(16),
-    'Patching syscall table done',
-    'Overwriting sector 13',
-    'Decrypting payload chunk 3/8',
-    'Handshake with unknown host',
-    'Randomizing pointers OK',
-    'Clearing temp logs',
-    'Flushing CPU caches'
-  ];
-
-  hackInterval = setInterval(()=>{
-    const lines = 1 + Math.floor(Math.random() * 2);
-    for(let i=0;i<lines;i++){
-      const idx = Math.floor(Math.random()*noise.length);
-      const txt = noise[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999));
-      appendLine(txt);
+  let ticks = 0; const maxTicks = 25;
+  hackInterval = setInterval(() => {
+    const lines = 1 + Math.floor(Math.random()*2);
+    for (let i=0;i<lines;i++) {
+      const idx = Math.floor(Math.random()*noiseSamples.length);
+      const text = noiseSamples[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999));
+      appendLine(text);
     }
     ticks++;
-    if(ticks >= maxTicks) {
+    if (ticks >= maxTicks) {
       clearInterval(hackInterval);
       hackInterval = null;
       runningHack = false;
-      if(!firewallBroken) {
+      if (!firewallBroken) {
         appendLine('');
         appendLine('<span class="accessDenied">ACCESS DENIED</span>');
-        hackSucceeded = false;
       } else {
-        targetPassword = genUniquePassword(12);
+        targetPassword = genPassword(12);
         appendLine('');
         appendLine('<span class="cmd-strong">target password ' + targetPassword + '</span>');
         hackSucceeded = true;
-        appendLine('(run listen next to create network visual; control available after listen)');
+        appendLine('(run listen next to visualize network; control after listen)');
       }
     }
   }, 200);
 }
 
-/* ------------------------
-   helper generate password
-   ------------------------ */
-const generatedPasswords = new Set();
-function genUniquePassword(len) {
+/* small password generator */
+const usedPw = new Set();
+function genPassword(len) {
   len = len || 12;
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for(let a=0;a<5000;a++){
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  for (let tries=0; tries<5000; tries++) {
     let s='';
-    for(let i=0;i<len;i++) s += chars.charAt(Math.floor(Math.random()*chars.length));
-    if(!generatedPasswords.has(s)){ generatedPasswords.add(s); return s; }
+    for (let i=0;i<len;i++) s += chars.charAt(Math.floor(Math.random()*chars.length));
+    if (!usedPw.has(s)) { usedPw.add(s); return s; }
   }
   // fallback
-  let fb=''; for(let i=0;i<len;i++) fb += chars.charAt(Math.floor(Math.random()*chars.length));
-  generatedPasswords.add(fb); return fb;
+  let f='';
+  for (let i=0;i<len;i++) f += chars.charAt(Math.floor(Math.random()*chars.length));
+  usedPw.add(f); return f;
 }
 
-/* ------------------------
-   command: listen
-   - simulates scanning, then creates SVG visual (computer->globe->T)
-   ------------------------ */
+/* ---------------------------
+   Listen -> create SVG visual
+   --------------------------- */
 function cmd_listen() {
-  if(!hackSucceeded) { appendLine('Listen denied — run hack successfully first'); return; }
-  if(listenDone) { appendLine('Listen already done'); return; }
-  appendLine('> Listening for network endpoints', 'cmd-echo');
-  const steps = ['Probing network','Collecting ARP','Scanning ports','Resolving banners','Estimating latency','Enumerating hosts'];
-  let s = 0; const maxS = 14;
-  const si = setInterval(()=>{
-    appendLine(steps[Math.floor(Math.random()*steps.length)] + ' ' + Math.floor(Math.random()*100));
+  if (!hackSucceeded) { appendLine('Listen denied — run hack successfully first'); return; }
+  if (listenDone) { appendLine('Listen already completed'); return; }
+  appendLine('> Listening for endpoints', 'cmd-echo');
+  const steps = ['Probing local network','Collecting ARP','Scanning ports','Resolving DNS entries','Fetching routing table','Estimating latency','Enumerating remote hosts'];
+  let s = 0; const maxS = 12;
+  const si = setInterval(()=> {
+    appendLine(steps[Math.floor(Math.random()*steps.length)] + ' ' + Math.floor(Math.random()*120));
     s++;
-    if(s>=maxS) { clearInterval(si); createNetworkVisual(); listenDone = true; appendLine(''); appendLine('(listen complete — control available)'); }
+    if (s >= maxS) {
+      clearInterval(si);
+      createNetworkVisual();
+      listenDone = true;
+      appendLine('');
+      appendLine('(listen complete — control available)');
+    }
   }, 220);
 }
 
-/* ------------------------
-   createNetworkVisual - constructs the SVG and inserts into terminal
-   - computer left, globe middle, target T right
-   - arrow animateMotion along path
-   ------------------------ */
+/* createNetworkVisual: builds SVG showing computer -> globe -> target T */
 function createNetworkVisual() {
-  // create wrapper div
-  const wrap = document.createElement('div');
-  wrap.className = 'visual-wrap';
-
-  const svgns = "http://www.w3.org/2000/svg";
-  const svg = document.createElementNS(svgns, 'svg');
+  // wrapper
+  const wrap = document.createElement('div'); wrap.className = 'visual-wrap';
+  const svgns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgns,'svg');
   svg.setAttribute('viewBox','0 0 240 80');
   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
 
-  // defs
+  // path (hidden) and visible dashed path
   const defs = document.createElementNS(svgns,'defs');
-
-  // path for motion and visible dashed path
   const path = document.createElementNS(svgns,'path');
-  const pathId = 'path_' + Date.now();
-  path.setAttribute('id', pathId);
+  const pid = 'netpath_' + Date.now();
+  path.setAttribute('id', pid);
   path.setAttribute('d', 'M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24');
-  path.setAttribute('fill','none');
-  path.setAttribute('stroke','none');
-  defs.appendChild(path);
-  svg.appendChild(defs);
+  path.setAttribute('fill','none'); path.setAttribute('stroke','none');
+  defs.appendChild(path); svg.appendChild(defs);
 
-  const visiblePath = document.createElementNS(svgns,'path');
-  visiblePath.setAttribute('d', path.getAttribute('d'));
-  visiblePath.setAttribute('stroke','#ff6b6b');
-  visiblePath.setAttribute('stroke-width','1.4');
-  visiblePath.setAttribute('stroke-dasharray','6 6');
-  visiblePath.setAttribute('fill','none');
-  visiblePath.setAttribute('opacity','0.22');
-  svg.appendChild(visiblePath);
+  const visPath = document.createElementNS(svgns,'path');
+  visPath.setAttribute('d', path.getAttribute('d'));
+  visPath.setAttribute('stroke','#ff6b6b');
+  visPath.setAttribute('stroke-width','1.4');
+  visPath.setAttribute('stroke-dasharray','6 6');
+  visPath.setAttribute('fill','none');
+  visPath.setAttribute('opacity','0.22');
+  svg.appendChild(visPath);
 
-  // computer (left)
-  const compG = document.createElementNS(svgns,'g');
-  compG.setAttribute('transform','translate(12,8) scale(1)');
-  const compRect = document.createElementNS(svgns,'rect');
-  compRect.setAttribute('x','0'); compRect.setAttribute('y','0'); compRect.setAttribute('width','48'); compRect.setAttribute('height','32'); compRect.setAttribute('rx','4'); compRect.setAttribute('fill','#111'); compRect.setAttribute('stroke','#ff6b6b');
-  compG.appendChild(compRect);
-  svg.appendChild(compG);
+  // computer
+  const comp = document.createElementNS(svgns,'g'); comp.setAttribute('transform','translate(12,8) scale(1)');
+  const compRect = document.createElementNS(svgns,'rect'); compRect.setAttribute('x','0'); compRect.setAttribute('y','0'); compRect.setAttribute('width','48'); compRect.setAttribute('height','32'); compRect.setAttribute('rx','4'); compRect.setAttribute('fill','#111'); compRect.setAttribute('stroke','#ff6b6b');
+  comp.appendChild(compRect); svg.appendChild(comp);
 
-  // globe (center)
-  const globeG = document.createElementNS(svgns,'g');
-  globeG.setAttribute('transform','translate(112,2) scale(1)');
-  const globeCircle = document.createElementNS(svgns,'circle');
-  globeCircle.setAttribute('cx','28'); globeCircle.setAttribute('cy','28'); globeCircle.setAttribute('r','24'); globeCircle.setAttribute('fill','#071'); globeCircle.setAttribute('stroke','#ff6b6b');
-  globeG.appendChild(globeCircle);
-  svg.appendChild(globeG);
+  // globe
+  const globeG = document.createElementNS(svgns,'g'); globeG.setAttribute('transform','translate(112,2) scale(1)');
+  const globeCircle = document.createElementNS(svgns,'circle'); globeCircle.setAttribute('cx','28'); globeCircle.setAttribute('cy','28'); globeCircle.setAttribute('r','24'); globeCircle.setAttribute('fill','#071'); globeCircle.setAttribute('stroke','#ff6b6b');
+  globeG.appendChild(globeCircle); svg.appendChild(globeG);
 
-  // target T (right) — id 'targetT'
-  const targG = document.createElementNS(svgns,'g');
-  targG.setAttribute('transform','translate(212,12) scale(1)');
-  const targRect = document.createElementNS(svgns,'rect');
-  targRect.setAttribute('id','targetT'); targRect.setAttribute('x','0'); targRect.setAttribute('y','0'); targRect.setAttribute('width','24'); targRect.setAttribute('height','24'); targRect.setAttribute('rx','4'); targRect.setAttribute('fill','#111'); targRect.setAttribute('stroke','#ff6b6b');
-  const targText = document.createElementNS(svgns,'text');
-  targText.setAttribute('x','12'); targText.setAttribute('y','16'); targText.setAttribute('font-size','14'); targText.setAttribute('text-anchor','middle'); targText.setAttribute('fill','#ff6b6b'); targText.textContent='T';
-  targG.appendChild(targRect); targG.appendChild(targText);
-  svg.appendChild(targG);
+  // target T
+  const tG = document.createElementNS(svgns,'g'); tG.setAttribute('transform','translate(212,12) scale(1)');
+  const targetRect = document.createElementNS(svgns,'rect'); targetRect.setAttribute('id','targetT'); targetRect.setAttribute('x','0'); targetRect.setAttribute('y','0'); targetRect.setAttribute('width','24'); targetRect.setAttribute('height','24'); targetRect.setAttribute('rx','4'); targetRect.setAttribute('fill','#111'); targetRect.setAttribute('stroke','#ff6b6b');
+  const tText = document.createElementNS(svgns,'text'); tText.setAttribute('x','12'); tText.setAttribute('y','16'); tText.setAttribute('font-size','14'); tText.setAttribute('text-anchor','middle'); tText.setAttribute('fill','#ff6b6b'); tText.textContent='T';
+  tG.appendChild(targetRect); tG.appendChild(tText); svg.appendChild(tG);
 
-  // arrow polygon animateMotion
+  // arrow polygon with animateMotion
   const arrow = document.createElementNS(svgns,'polygon');
-  arrow.setAttribute('points','0,0 0,6 9,3');
-  arrow.setAttribute('fill','#ff6b6b');
-  const anim = document.createElementNS(svgns,'animateMotion');
-  anim.setAttribute('dur','3.6s'); anim.setAttribute('repeatCount','indefinite'); anim.setAttribute('rotate','auto');
-  const mpath = document.createElementNS(svgns,'mpath');
-  mpath.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href','#' + pathId);
-  anim.appendChild(mpath);
-  arrow.appendChild(anim);
-  svg.appendChild(arrow);
+  arrow.setAttribute('points','0,0 0,6 9,3'); arrow.setAttribute('fill','#ff6b6b');
+  const aMotion = document.createElementNS(svgns,'animateMotion'); aMotion.setAttribute('dur','3.6s'); aMotion.setAttribute('repeatCount','indefinite'); aMotion.setAttribute('rotate','auto');
+  const mpath = document.createElementNS(svgns,'mpath'); mpath.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href','#' + pid);
+  aMotion.appendChild(mpath); arrow.appendChild(aMotion); svg.appendChild(arrow);
 
-  // append to wrap and terminal
   wrap.appendChild(svg);
   cmdBody.appendChild(wrap);
   cmdBody.scrollTop = cmdBody.scrollHeight;
 
-  // store references
   svgContainer = svg;
-  svgViewBox = { w:240, h:80 };
 
-  // attach mouse handlers for cursor inject mode
-  svgContainer.addEventListener('mousemove', function(ev){
-    const rect = svgContainer.getBoundingClientRect();
-    const x = ((ev.clientX - rect.left) / rect.width) * svgViewBox.w;
-    const y = ((ev.clientY - rect.top) / rect.height) * svgViewBox.h;
-    lastCursorPos = { x: x, y: y };
+  // mouse handlers for cursor mode
+  svg.addEventListener('mousemove', ev => {
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
+    const x = ((ev.clientX - rect.left)/rect.width) * vb.width + vb.x;
+    const y = ((ev.clientY - rect.top)/rect.height) * vb.height + vb.y;
+    lastCursorPos = { x, y };
   });
-
-  svgContainer.addEventListener('click', function(ev){
-    const rect = svgContainer.getBoundingClientRect();
-    const vb = svgContainer.viewBox && svgContainer.viewBox.baseVal ? svgContainer.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
-    const x = ((ev.clientX - rect.left) / rect.width) * vb.width + vb.x;
-    const y = ((ev.clientY - rect.top) / rect.height) * vb.height + vb.y;
-    lastCursorPos = { x: x, y: y };
+  svg.addEventListener('click', ev => {
+    const rect = svg.getBoundingClientRect();
+    const vb = svg.viewBox && svg.viewBox.baseVal ? svg.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
+    const x = ((ev.clientX - rect.left)/rect.width) * vb.width + vb.x;
+    const y = ((ev.clientY - rect.top)/rect.height) * vb.height + vb.y;
+    lastCursorPos = { x, y };
     appendLine('cursor target set x=' + Math.round(x) + ' y=' + Math.round(y));
   });
 }
 
-/* ------------------------
-   command: control
-   ------------------------ */
+/* ---------------------------
+   Control
+   --------------------------- */
 function cmd_control() {
-  if(!listenDone) { appendLine('Control denied — run listen first'); return; }
-  if(controlActive) { appendLine('Control already enabled'); return; }
+  if (!listenDone && !svgContainer) { appendLine('Control denied — run listen first'); return; }
   controlActive = true;
   appendLine('[CONTROL MODE ENGAGED]');
   appendLine('(spawn clone, inject, teleport now available)');
 }
 
-/* ------------------------
-   clone management helpers
-   - spawn clones (reset old clones if present)
-   - clones move to static target T by default
-   - uses requestAnimationFrame (no recursion)
-   ------------------------ */
-
+/* ---------------------------
+   animation.stop(): stop animateMotion & clone movement
+   --------------------------- */
 function cmd_animation_stop() {
-  // Pause or remove animateMotion elements and stop clone movement
-  if(!svgContainer) { appendLine('No visual to stop animation on'); return; }
-
-  // stop animateMotion by removing animateMotion nodes (they will cease)
-  const ams = svgContainer.querySelectorAll('animateMotion');
-  ams.forEach(a => {
-    try { a.parentNode.removeChild(a); } catch(e){}
-  });
-
-  // stop clones movement
+  if (!svgContainer) { appendLine('No visual to stop'); return; }
+  // remove all animateMotion elements inside svg
+  const anims = svgContainer.querySelectorAll('animateMotion');
+  anims.forEach(a => { try { a.parentNode.removeChild(a); } catch(e){} });
+  // stop clone updates
   clonesActive = false;
   animationStopped = true;
   appendLine('All animations stopped');
 }
 
+/* ---------------------------
+   destroy(): remove svg & reset
+   --------------------------- */
 function cmd_destroy() {
-  // remove visual entirely and reset state
-  if(svgContainer && svgContainer.parentNode) {
-    // the svg sits inside a wrapper (.visual-wrap) inside cmdBody
+  if (svgContainer) {
     const wrap = svgContainer.parentNode;
-    if(wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
+    if (wrap && wrap.parentNode) wrap.parentNode.removeChild(wrap);
   }
   svgContainer = null;
   listenDone = false;
   controlActive = false;
-  cloneObjects.forEach(o => { try{ if(o.el && o.el.parentNode) o.el.parentNode.removeChild(o.el);}catch(e){} });
+  cloneObjects.forEach(o => { try { if (o.el && o.el.parentNode) o.el.parentNode.removeChild(o.el); } catch(e){} });
   cloneObjects = [];
   clonesActive = false;
   appendLine('Visual destroyed and state reset');
 }
 
-/* spawn clone implementation (robust)
-   - removes previous clone layer if present
-   - spawns cloneObjects and animates them toward static target T
-*/
-function cmd_spawn_clone_impl() {
-  if(!controlActive) { appendLine('Spawn clone denied — control not active'); return; }
-  if(!svgContainer) { appendLine('No visual present — run listen first'); return; }
-
-  // if clonesActive currently true, remove old clones and reset
-  if(clonesActive) {
-    appendLine('Existing clones active — stopping and removing old clones before spawning new set');
-    // remove clone elements
-    cloneObjects.forEach(o => { try { if(o.el && o.el.parentNode) o.el.parentNode.removeChild(o.el); } catch(e) {} });
-    cloneObjects = [];
-    clonesActive = false;
+/* ---------------------------
+   spawn clone (robust)
+   - removes old clone layer if present
+   - spawns clones that move toward static targetT
+   --------------------------- */
+function cmd_spawn_clone() {
+  if (!controlActive) { appendLine('Spawn clone denied — control not active'); return; }
+  if (!svgContainer) { appendLine('No visual present — run listen first'); return; }
+  // remove existing clones if any
+  if (cloneLayer && cloneLayer.parentNode) {
+    try { cloneLayer.parentNode.removeChild(cloneLayer); } catch(e){}
+    cloneLayer = null;
   }
-
-  // resolve static target coordinates from #targetT in svg
-  let staticTargetX = null, staticTargetY = null;
+  cloneObjects = []; clonesActive = false;
+  // resolve static target coords
+  let tx = null, ty = null;
   try {
-    const targetEl = svgContainer.querySelector('#targetT');
-    if(targetEl) {
-      const bb = targetEl.getBBox();
-      staticTargetX = bb.x + bb.width/2;
-      staticTargetY = bb.y + bb.height/2;
-    }
-  } catch(e) {}
-
-  // fallback to viewBox
-  if(staticTargetX === null || staticTargetY === null) {
-    try {
-      const vb = svgContainer.viewBox && svgContainer.viewBox.baseVal ? svgContainer.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
-      staticTargetX = staticTargetX === null ? (vb.x + vb.width * 0.85) : staticTargetX;
-      staticTargetY = staticTargetY === null ? (vb.y + vb.height * 0.5) : staticTargetY;
-    } catch(e) {
-      staticTargetX = 200; staticTargetY = 40;
-    }
+    const tEl = svgContainer.querySelector('#targetT');
+    if (tEl) { const bb = tEl.getBBox(); tx = bb.x + bb.width/2; ty = bb.y + bb.height/2; }
+  } catch(e){}
+  if (tx === null || ty === null) {
+    const vb = svgContainer.viewBox && svgContainer.viewBox.baseVal ? svgContainer.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
+    tx = tx === null ? (vb.x + vb.width * 0.85) : tx;
+    ty = ty === null ? (vb.y + vb.height * 0.5) : ty;
   }
+  appendLine('> Spawning clones to static target T x=' + Math.round(tx) + ' y=' + Math.round(ty), 'cmd-echo');
 
-  appendLine('> Spawning clones heading to static target T x=' + Math.round(staticTargetX) + ' y=' + Math.round(staticTargetY), 'cmd-echo');
-
-  // configuration
-  const count = CLONE_COUNT || 6;
-  const r = 3.8;
-  const speed = CLONE_SPEED || 3.0;
-  const duration = CLONE_DURATION || 5000;
-
-  // create a layer group for clones
-  const svgns = "http://www.w3.org/2000/svg";
+  // create layer
+  const svgns = 'http://www.w3.org/2000/svg';
   const g = document.createElementNS(svgns,'g');
-  const gid = 'cloneLayer_' + Date.now();
-  g.setAttribute('id', gid);
-  svgContainer.appendChild(g);
   cloneLayer = g;
+  svgContainer.appendChild(g);
 
-  // derive a start base point (left side of path)
-  let startBaseX = 36, startBaseY = 24;
-  try {
-    const vb2 = svgContainer.viewBox && svgContainer.viewBox.baseVal ? svgContainer.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
-    startBaseX = vb2.x + vb2.width * 0.12;
-    startBaseY = vb2.y + vb2.height * 0.3;
-  } catch(e) {}
+  const vb = svgContainer.viewBox && svgContainer.viewBox.baseVal ? svgContainer.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
+  const startBaseX = vb.x + vb.width * 0.12;
+  const startBaseY = vb.y + vb.height * 0.3;
 
-  // spawn clones
-  cloneObjects = [];
-  for(let i=0;i<count;i++){
+  // spawn
+  for (let i=0;i<CLONE_COUNT;i++){
     const c = document.createElementNS(svgns,'circle');
-    c.setAttribute('r', r);
-    c.setAttribute('fill', '#ff6b6b');
-    const sx = startBaseX + (Math.random() - 0.5) * 16;
-    const sy = startBaseY + (Math.random() - 0.5) * 12;
-    c.__x = sx; c.__y = sy;
-    c.setAttribute('cx', sx); c.setAttribute('cy', sy);
+    const r = 4; c.setAttribute('r', r); c.setAttribute('fill', '#ff6b6b');
+    const sx = startBaseX + (Math.random()-0.5)*20;
+    const sy = startBaseY + (Math.random()-0.5)*12;
+    c.__x = sx; c.__y = sy; c.setAttribute('cx', sx); c.setAttribute('cy', sy);
     g.appendChild(c);
-    const meta = { el: c, x: sx, y: sy, startX: sx, startY: sy, targetX: staticTargetX, targetY: staticTargetY, id: 'clone_' + Date.now() + '_' + i, createdAt: Date.now() };
-    cloneObjects.push(meta);
+    cloneObjects.push({ el: c, x: sx, y: sy, targetX: tx, targetY: ty, id: 'clone_' + Date.now() + '_' + i });
   }
 
+  // animate clones using requestAnimationFrame
   clonesActive = true;
   animationStopped = false;
   const startTime = Date.now();
-  let lastFrame = null;
-  let telemetryLast = 0;
-
-  // animation frame loop
-  function frame(now) {
-    if(!clonesActive || animationStopped) { clonesActive = false; return; }
-    if(!lastFrame) lastFrame = now;
-    const dt = Math.min(64, now - lastFrame);
-    lastFrame = now;
+  let last = null;
+  function step(now) {
+    if (!clonesActive || animationStopped) { clonesActive = false; return; }
+    if (!last) last = now;
+    const dt = Math.min(64, now - last);
+    last = now;
     const elapsed = Date.now() - startTime;
-
-    for(let k=0;k<cloneObjects.length;k++){
+    for (let k=0;k<cloneObjects.length;k++){
       const o = cloneObjects[k];
-      let cx = o.x, cy = o.y;
-      const tx = o.targetX, ty = o.targetY;
-      const dx = tx - cx, dy = ty - cy;
+      const cx = o.x, cy = o.y, tx2 = o.targetX, ty2 = o.targetY;
+      const dx = tx2 - cx, dy = ty2 - cy;
       const dist = Math.sqrt(dx*dx + dy*dy);
-      if(dist <= 0.9) { o.x = tx; o.y = ty; o.el.setAttribute('cx', o.x); o.el.setAttribute('cy', o.y); continue; }
-      const baselinePerMs = (speed) / 16.0;
-      const step = baselinePerMs * dt;
-      if(step >= dist) { o.x = tx; o.y = ty; } else { o.x += (dx / dist) * step; o.y += (dy / dist) * step; }
+      if (dist <= 0.9) { o.x = tx2; o.y = ty2; o.el.setAttribute('cx', o.x); o.el.setAttribute('cy', o.y); continue; }
+      const baselinePerMs = CLONE_SPEED / 16.0;
+      const stepPx = baselinePerMs * dt;
+      if (stepPx >= dist) { o.x = tx2; o.y = ty2; } else { o.x += (dx / dist) * stepPx; o.y += (dy / dist) * stepPx; }
       o.el.setAttribute('cx', o.x); o.el.setAttribute('cy', o.y);
     }
-
-    if(elapsed - telemetryLast > 900) { telemetryLast = elapsed; appendLine('clone telemetry update t=' + Math.floor(elapsed) + 'ms clones=' + cloneObjects.length); }
-
-    if(elapsed < duration && clonesActive && !animationStopped) {
-      requestAnimationFrame(frame);
-    } else {
-      clonesActive = false;
-      appendLine('clone sequence complete - ' + Math.round(duration/1000) + 's elapsed');
-      // clones remain on screen for inspection (do not auto-remove)
-    }
+    if (elapsed < CLONE_DURATION) requestAnimationFrame(step);
+    else { clonesActive = false; appendLine('clone sequence complete - ' + Math.round(CLONE_DURATION/1000) + 's elapsed'); }
   }
-
-  requestAnimationFrame(frame);
-  appendLine('Spawned ' + cloneObjects.length + ' clones; they will move toward T');
+  requestAnimationFrame(step);
+  appendLine('Spawned ' + cloneObjects.length + ' clones');
 }
 
-/* ------------------------
-   command: inject <mode>
-   - sets currentInjectMode; active clones may adopt new behavior
-   ------------------------ */
+/* ---------------------------
+   inject <mode> - set mode
+   --------------------------- */
 function cmd_inject(mode) {
-  if(!controlActive) { appendLine('Inject denied — control not active'); return; }
-  if(!mode) { appendLine('Specify inject mode: random pathfinding cursor'); return; }
-  const m = mode.trim().toLowerCase();
-  if(m !== 'random' && m !== 'pathfinding' && m !== 'cursor'){ appendLine('Unknown inject mode ' + escapeHtml(mode)); return; }
+  if (!controlActive) { appendLine('Inject denied — control not active'); return; }
+  const m = (mode || '').trim().toLowerCase();
+  if (!m) { appendLine('Specify inject mode: random, pathfinding, cursor'); return; }
+  if (['random','pathfinding','cursor'].indexOf(m) === -1) { appendLine('Unknown inject mode ' + escapeHtml(m)); return; }
   currentInjectMode = m;
   appendLine('inject mode set to ' + currentInjectMode);
-  if(clonesActive) appendLine('(Active clones will adopt new mode where applicable)');
 }
 
-/* ------------------------
-   command: teleport
-   - simple particle along path and nudges clones
-   ------------------------ */
+/* ---------------------------
+   teleport (visual) and nudge
+   --------------------------- */
 function cmd_teleport() {
-  if(!controlActive) { appendLine('Teleport denied — control not active'); return; }
-  if(!svgContainer) { appendLine('No visual present — run listen first'); return; }
-  appendLine('> Initiating teleport', 'cmd-echo');
-
-  const svgns = "http://www.w3.org/2000/svg";
-  const p = document.createElementNS(svgns,'circle');
-  p.setAttribute('r',3.6); p.setAttribute('fill','#ff6b6b'); p.setAttribute('opacity','0.98');
-
+  if (!controlActive) { appendLine('Teleport denied — control not active'); return; }
+  if (!svgContainer) { appendLine('No visual — run listen'); return; }
+  appendLine('> Initiating teleport transfer', 'cmd-echo');
+  const svgns = 'http://www.w3.org/2000/svg';
+  const p = document.createElementNS(svgns,'circle'); p.setAttribute('r',3.6); p.setAttribute('fill','#ff6b6b'); p.setAttribute('opacity','0.98');
   // starting from target
-  let startX = 212, startY = 24;
-  try { const t = svgContainer.querySelector('#targetT'); if(t){ const b = t.getBBox(); startX = b.x + b.width/2; startY = b.y + b.height/2; } } catch(e){}
-
-  p.setAttribute('cx', startX); p.setAttribute('cy', startY);
-  svgContainer.appendChild(p);
-
-  const pathPts = [{x:startX,y:startY},{x:160,y:30},{x:110,y:26},{x:36,y:24}];
+  let sx = 212, sy = 24;
+  try { const te = svgContainer.querySelector('#targetT'); if (te) { const b = te.getBBox(); sx = b.x + b.width/2; sy = b.y + b.height/2; } } catch(e){}
+  p.setAttribute('cx', sx); p.setAttribute('cy', sy); svgContainer.appendChild(p);
+  const pathPts = [{x:sx,y:sy},{x:160,y:30},{x:110,y:26},{x:36,y:24}];
   const dur = 2200; const st = Date.now();
-
-  (function animParticle(){
+  (function anim(){
     const now = Date.now(); const t = Math.min(1, (now - st) / dur);
     const segCount = pathPts.length - 1;
     const segT = t * segCount;
@@ -692,123 +558,63 @@ function cmd_teleport() {
     const nx = p0.x + (p1.x - p0.x) * localT;
     const ny = p0.y + (p1.y - p0.y) * localT;
     p.setAttribute('cx', nx); p.setAttribute('cy', ny);
-    if(t < 1) requestAnimationFrame(animParticle);
-    else { try{ if(p.parentNode) p.parentNode.removeChild(p); } catch(e){} appendLine('teleport transfer complete'); }
+    if (t < 1) requestAnimationFrame(anim); else { try{ p.parentNode.removeChild(p); }catch(e){} appendLine('teleport transfer complete'); }
   })();
-
-  // nudge clones slightly
-  for(let i=0;i<cloneObjects.length;i++){
-    const c = cloneObjects[i];
-    try { c.x += (Math.random()-0.5) * 18; c.y += (Math.random()-0.5) * 12; c.el.setAttribute('cx', c.x); c.el.setAttribute('cy', c.y); } catch(e){}
-  }
+  for (let i=0;i<cloneObjects.length;i++){ try{ const c = cloneObjects[i]; c.x += (Math.random()-0.5)*18; c.y += (Math.random()-0.5)*12; c.el.setAttribute('cx',c.x); c.el.setAttribute('cy',c.y); }catch(e){} }
 }
 
-/* ------------------------
-   command routing (input)
-   ------------------------ */
+/* ---------------------------
+   Input routing
+   --------------------------- */
 cmdInput.addEventListener('keydown', function(e){
-  if(e.key === 'Enter'){
-    const raw = cmdInput.value.trim();
-    cmdInput.value = '';
-    if(raw.length === 0) return;
-    appendLine('> ' + escapeHtml(raw), 'cmd-echo');
+  if (e.key !== 'Enter') return;
+  const raw = cmdInput.value.trim(); cmdInput.value = '';
+  if (!raw) return;
+  appendLine('> ' + escapeHtml(raw), 'cmd-echo');
+  const parts = raw.split(/\s+/);
+  const cmd = parts[0].toLowerCase();
+  const rest = parts.slice(1).join(' ');
 
-    const tokens = raw.split(/\s+/);
-    const cmd = tokens[0].toLowerCase();
-    const args = tokens.slice(1);
-
-    if(cmd === 'firewall') { cmd_firewall(); return; }
-    if(cmd === 'hack') { cmd_hack(); return; }
-    if(cmd === 'listen') { cmd_listen(); return; }
-    if(cmd === 'control') { cmd_control(); return; }
-    if((cmd === 'spawn' && args[0] && args[0].toLowerCase() === 'clone') || cmd === 'clone' || (cmd === 'spawn' && !args[0])) { cmd_spawn_clone_impl(); return; }
-    if(cmd === 'inject') { cmd_inject(args.join(' ')); return; }
-    if(cmd === 'teleport') { cmd_teleport(); return; }
-    if(cmd === 'animation.stop' || (cmd === 'animation' && args[0] && args[0].toLowerCase() === 'stop')) { cmd_animation_stop(); return; }
-    if(cmd === 'destroy') { cmd_destroy(); return; }
-    if(cmd === 'help') {
-      appendLine('Available commands', 'cmd-strong');
-      appendLine('- firewall        Engage firewall breaker (run before hack)');
-      appendLine('- hack            Run hack sequence (~5s)');
-      appendLine('- listen          Map network visualization');
-      appendLine('- control         Activate control (after listen)');
-      appendLine('- spawn clone     Spawn clones (requires control)');
-      appendLine('- inject <mode>   Mode: random pathfinding cursor');
-      appendLine('- teleport        Teleport simulation');
-      appendLine('- animation.stop  Stop animations');
-      appendLine('- destroy         Remove visual and reset state');
-      appendLine('- help            Show this help');
-      return;
-    }
-    appendLine('Unknown command ' + escapeHtml(raw));
+  if (cmd === 'firewall') { cmd_firewall(); return; }
+  if (cmd === 'hack') { cmd_hack(); return; }
+  if (cmd === 'listen') { cmd_listen(); return; }
+  if (cmd === 'control') { cmd_control(); return; }
+  if ((cmd === 'spawn' && parts[1] && parts[1].toLowerCase() === 'clone') || cmd === 'clone') { cmd_spawn_clone(); return; }
+  if (cmd === 'inject') { cmd_inject(rest); return; }
+  if (cmd === 'teleport') { cmd_teleport(); return; }
+  if (cmd === 'animation.stop' || (cmd === 'animation' && parts[1] && parts[1].toLowerCase() === 'stop')) { cmd_animation_stop(); return; }
+  if (cmd === 'destroy') { cmd_destroy(); return; }
+  if (cmd === 'help') {
+    appendLine('Available commands', 'cmd-strong');
+    appendLine('- firewall');
+    appendLine('- hack');
+    appendLine('- listen');
+    appendLine('- control');
+    appendLine('- spawn clone');
+    appendLine('- inject <random|pathfinding|cursor>');
+    appendLine('- teleport');
+    appendLine('- animation.stop');
+    appendLine('- destroy');
+    appendLine('- help');
+    return;
   }
+  appendLine('Unknown command ' + escapeHtml(raw));
 });
 
-/* ------------------------
-   attach cursor handlers to latest visual (periodic)
-   ------------------------ */
-function attachCursorHandlers() {
-  const visuals = cmdBody.querySelectorAll('.visual-wrap svg');
-  if(!visuals || visuals.length === 0) return;
-  const latest = visuals[visuals.length - 1];
-  if(!latest) return;
-  if(latest.__hasHandlers) return;
-  latest.__hasHandlers = true;
-
-  latest.addEventListener('mousemove', function(ev){
-    const rect = latest.getBoundingClientRect();
-    const vb = latest.viewBox && latest.viewBox.baseVal ? latest.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
-    const x = ((ev.clientX - rect.left) / rect.width) * vb.width + vb.x;
-    const y = ((ev.clientY - rect.top) / rect.height) * vb.height + vb.y;
-    lastCursorPos = { x: x, y: y };
-  });
-
-  latest.addEventListener('click', function(ev){
-    const rect = latest.getBoundingClientRect();
-    const vb = latest.viewBox && latest.viewBox.baseVal ? latest.viewBox.baseVal : { x:0, y:0, width:240, height:80 };
-    const x = ((ev.clientX - rect.left) / rect.width) * vb.width + vb.x;
-    const y = ((ev.clientY - rect.top) / rect.height) * vb.height + vb.y;
-    lastCursorPos = { x: x, y: y };
-    appendLine('cursor target set x=' + Math.round(x) + ' y=' + Math.round(y));
-  });
-}
-const attachInterval = setInterval(attachCursorHandlers, 700);
-
-/* ------------------------
-   cleanup
-   ------------------------ */
-window.addEventListener('beforeunload', function(){ if(initTimer) clearInterval(initTimer); if(hackInterval) clearInterval(hackInterval); clearInterval(attachInterval); });
-
-/* End of main script */
+/* ---------------------------
+   Useful diagnostics (exposed in window for console)
+   --------------------------- */
+window.C00L = {
+  appendLine,
+  cmd_spawn_clone: cmd_spawn_clone,
+  cmd_spawn_clone_impl: cmd_spawn_clone, // alias
+  cmd_destroy,
+  cmd_animation_stop
+};
 
 /* =========================================================================
-   Extra long filler comments to increase line count (harmless)
-   You can safely remove these if you want file shorter.
+   End main script
    ========================================================================= */
-
-/*
-  ---------- EXTRA FILLER (START) ----------
-  The following comment blocks are intentionally long to reach >1000 lines.
-  They are inert and safe. They exist purely to satisfy the "long file" need.
-*/
-
-/* repeated comment block — copy many times */
-<!--
-This is filler text. It repeats many times to increase the length of the file.
-You can delete it if you don't need the file to be artificially long.
--->
-/* repeat a few more times programmatically-like in comments */
-<!--
-FILLER FILLER FILLER FILLER FILLER FILLER FILLER FILLER FILLER FILLER
-FILLER FILLER FILLER FILLER FILLER FILLER FILLER FILLER FILLER FILLER
--->
-<!--
-FILLER BLOCK
--->
-<!--
-FILLER BLOCK
--->
-<!-- end filler -->
 </script>
 
 </body>
