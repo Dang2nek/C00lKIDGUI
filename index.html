@@ -65,12 +65,6 @@
     align-items:center;
   }
 
-  .hint {
-    margin-top:14px;
-    color:rgba(255,255,255,0.6);
-    font-size:13px;
-  }
-
   /* Progress bar inside big box */
   #mainProgressArea {
     width: 80%;
@@ -197,7 +191,7 @@
         <div id="mainProgressText">Initializing terminal...</div>
       </div>
 
-      <div class="hint">ESC để đóng CMD. (Ctrl+R bị chặn khỏi reload trên trang này.)</div>
+      <!-- hint line removed per request -->
     </div>
   </div>
 
@@ -229,11 +223,11 @@
   let mainLoaded = false;
   let mainLoadingInterval = null;
 
-  // Start 5s loading
+  // Start 5s loading (fixed)
   function startMainLoading(){
     let progress = 0;
-    const duration = 5000; // 5 giây
-    const interval = 100;
+    const duration = 5000; // 5 seconds
+    const interval = 100; // update every 100ms
     const steps = duration / interval;
     const increment = 100 / steps;
 
@@ -256,11 +250,15 @@
     }, interval);
   }
 
-  startMainLoading(); // gọi khi load trang
+  startMainLoading();
 
-  // Fake CMD
+  // Terminal & fake-hack logic
   let runningHack = false;
   let hackTimer = null;
+
+  // firewall breaker state + generated IP set for uniqueness
+  let firewallBroken = false;
+  const generatedIPs = new Set();
 
   function appendLine(text, cls) {
     const el = document.createElement('div');
@@ -271,7 +269,17 @@
   }
 
   function showCMD(){
-    if(!mainLoaded) return; // chưa load xong thì ko mở
+    if(!mainLoaded){
+      // brief visual feedback: flash main progress text
+      const orig = mainProgressText.textContent;
+      mainProgressText.textContent = 'Terminal locked — initializing...';
+      mainProgressText.style.color = 'rgba(255,120,120,1)';
+      setTimeout(()=> {
+        mainProgressText.textContent = orig;
+        mainProgressText.style.color = '';
+      }, 700);
+      return;
+    }
     fakeCMD.style.display = 'block';
     cmdBody.innerHTML = '';
     appendLine('<span style="color:#ff6b6b">[C00lKID TERMINAL v0.1]</span>');
@@ -289,17 +297,24 @@
     }
   }
 
-  window.addEventListener('keydown', (e) => {
-    if(e.ctrlKey && e.key.toLowerCase() === 'r'){
-      e.preventDefault();
-      showCMD();
+  // helper: generate non-duplicate IP starting with 42.
+  function genUnique42IP(){
+    for(let attempts=0; attempts<1000; attempts++){
+      const a = 42;
+      const b = Math.floor(Math.random()*256);
+      const c = Math.floor(Math.random()*256);
+      const d = Math.floor(Math.random()*256);
+      const ip = `${a}.${b}.${c}.${d}`;
+      if(!generatedIPs.has(ip)){
+        generatedIPs.add(ip);
+        return ip;
+      }
     }
-    if(e.key === 'Escape'){
-      hideCMD();
-    }
-  });
-
-  cmdClose.addEventListener('click', hideCMD);
+    // fallback (shouldn't happen)
+    const fallback = `42.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}`;
+    generatedIPs.add(fallback);
+    return fallback;
+  }
 
   const nonsenseSamples = [
     "Loading kernel module... OK",
@@ -324,12 +339,14 @@
     "Triggering ISR: vector 0x" + Math.floor(Math.random()*255).toString(16)
   ];
 
+  // run fake hack: when firewallBroken==false -> ACCESS DENIED (as before)
+  // when firewallBroken==true -> print target ip: 42.x.y.z (unique)
   function runFakeHack(){
     if(runningHack) return;
     runningHack = true;
     appendLine('> Executing hack sequence...', 'info');
     let ticks = 0;
-    const maxTicks = 25;
+    const maxTicks = 25; // ~5s
     hackTimer = setInterval(() => {
       const lines = 1 + Math.floor(Math.random()*2);
       for(let i=0;i<lines;i++){
@@ -341,23 +358,67 @@
       if(ticks >= maxTicks || !runningHack){
         clearInterval(hackTimer);
         runningHack = false;
-        appendLine('');
-        appendLine('<span class="accessDenied">ACCESS DENIED</span>');
+
+        if(!firewallBroken){
+          appendLine('');
+          appendLine('<span class="accessDenied">ACCESS DENIED</span>');
+        } else {
+          // success: output unique ip starting with 42.
+          const ip = genUnique42IP();
+          appendLine('');
+          appendLine('<strong>target ip: ' + ip + '</strong>');
+        }
         cmdInput.focus();
       }
     }, 200);
   }
 
+  // Command handling: add 'firewall' command to break firewall
+  function handleCommand(raw){
+    const cmd = raw.trim().toLowerCase();
+    if(cmd === '') return;
+    appendLine('&gt; ' + escapeHtml(raw));
+    if(cmd === 'hack'){
+      runFakeHack();
+      return;
+    }
+    if(cmd === 'firewall'){
+      if(firewallBroken){
+        appendLine('Firewall already disabled.');
+      } else {
+        firewallBroken = true;
+        appendLine('Firewall breaker engaged. Retry hack.');
+      }
+      return;
+    }
+    appendLine('Unknown command: ' + escapeHtml(raw));
+  }
+
+  // key events
+  window.addEventListener('keydown', (e) => {
+    if(e.ctrlKey && e.key.toLowerCase() === 'r'){
+      e.preventDefault();
+      showCMD();
+    }
+    if(e.key === 'Escape' && fakeCMD.style.display === 'block'){
+      hideCMD();
+    }
+  });
+
+  cmdClose.addEventListener('click', hideCMD);
+
   cmdInput.addEventListener('keydown', (e) => {
     if(e.key === 'Enter'){
-      const val = cmdInput.value.trim();
-      appendLine('&gt; ' + escapeHtml(val));
+      const val = cmdInput.value;
       cmdInput.value = '';
-      if(val.toLowerCase() === 'hack'){
-        runFakeHack();
-      } else if (val.length > 0){
-        appendLine('Unknown command: ' + escapeHtml(val));
+      // only accept commands if mainLoaded (terminal enabled)
+      if(!mainLoaded){
+        appendLine('Terminal not ready.');
+        return;
       }
+      handleCommand(val);
+    } else if(e.key === 'Escape'){
+      hideCMD();
     }
   });
 
