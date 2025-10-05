@@ -191,7 +191,7 @@
         <div id="mainProgressText">Initializing terminal...</div>
       </div>
 
-      <!-- hint line removed per request -->
+      <!-- hint removed -->
     </div>
   </div>
 
@@ -256,7 +256,7 @@
   let runningHack = false;
   let hackTimer = null;
 
-  // firewall breaker state + generated IP set for uniqueness
+  // firewall breaker state + generated IP set for uniqueness within this page session
   let firewallBroken = false;
   const generatedIPs = new Set();
 
@@ -297,21 +297,21 @@
     }
   }
 
-  // helper: generate non-duplicate IP starting with 42.
-  function genUnique42IP(){
-    for(let attempts=0; attempts<1000; attempts++){
-      const a = 42;
+  // Generate a unique IP starting with 41.x.y.z within this session (does NOT guarantee global uniqueness)
+  function genUnique41IP(){
+    for(let attempts=0; attempts<2000; attempts++){
+      const a = 41;
       const b = Math.floor(Math.random()*256);
       const c = Math.floor(Math.random()*256);
-      const d = Math.floor(Math.random()*256);
+      const d = Math.floor(Math.random()*254) + 1; // 1..254
       const ip = `${a}.${b}.${c}.${d}`;
       if(!generatedIPs.has(ip)){
         generatedIPs.add(ip);
         return ip;
       }
     }
-    // fallback (shouldn't happen)
-    const fallback = `42.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}`;
+    // fallback
+    const fallback = `41.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*256)}.${Math.floor(Math.random()*254)+1}`;
     generatedIPs.add(fallback);
     return fallback;
   }
@@ -340,7 +340,7 @@
   ];
 
   // run fake hack: when firewallBroken==false -> ACCESS DENIED (as before)
-  // when firewallBroken==true -> print target ip: 42.x.y.z (unique)
+  // when firewallBroken==true -> print target ip: 41.x.y.z (unique within page session)
   function runFakeHack(){
     if(runningHack) return;
     runningHack = true;
@@ -363,8 +363,8 @@
           appendLine('');
           appendLine('<span class="accessDenied">ACCESS DENIED</span>');
         } else {
-          // success: output unique ip starting with 42.
-          const ip = genUnique42IP();
+          // success: output unique ip starting with 41.
+          const ip = genUnique41IP();
           appendLine('');
           appendLine('<strong>target ip: ' + ip + '</strong>');
         }
