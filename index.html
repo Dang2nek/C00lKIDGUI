@@ -7,10 +7,7 @@
 <style>
 /* =========================================================================
    THEME + LAYOUT
-   -------------------------------------------------------------------------
-   Colors, fonts, layout for the main card and the fake terminal overlay.
-   This block intentionally verbose so you can tweak visuals easily.
-   ========================================================================= */
+   ------------------------------------------------------------------------- */
 :root{
   --bg:#050405;
   --card-grad-top: rgba(255,255,255,0.02);
@@ -158,6 +155,30 @@ html,body{
 .cmd-strong{ font-weight:800; color:var(--red); }
 .accessDenied{ display:block; margin-top:8px; font-weight:900; font-size:34px; color:#ff4d4d; text-shadow:0 0 18px rgba(255,0,0,0.18); letter-spacing:2px; }
 
+/* Glitch alert styles (for the 30s one-time alert) */
+.cmd-alert {
+  font-weight:900;
+  font-size:20px;
+  color:#ff4d4d;
+  text-shadow: 0 0 8px rgba(255,0,0,0.18);
+  margin-top:8px;
+  animation: glitchFlash 80ms steps(2,end) 0s 12; /* short rapid flashes for ~1s */
+  display:inline-block;
+  padding:6px 8px;
+  border-radius:6px;
+  background: rgba(255,0,0,0.02);
+}
+@keyframes glitchFlash {
+  0% { opacity: 0.05; transform: translateX(0); }
+  10% { opacity: 0.95; transform: translateX(-2px); }
+  20% { opacity: 0.2; transform: translateX(1px); }
+  30% { opacity: 0.95; transform: translateX(0); }
+  40% { opacity: 0.1; transform: translateX(-1px); }
+  50% { opacity: 0.95; transform: translateX(2px); }
+  60% { opacity: 0.05; transform: translateX(0); }
+  100% { opacity: 0.95; transform: translateX(0); }
+}
+
 /* Responsive */
 @media (max-width:720px){
   .card{ padding:20px; }
@@ -172,15 +193,15 @@ html,body{
      ========================================================================= -->
 <div class="wrap">
   <div class="card" role="main" aria-live="polite">
-    <div class="title">WELCOME BACK,007n7</div>
-    <div class="sub">what do u want now</div>
+    <div class="title">WELCOME BACK C00lKID</div>
+    <div class="sub">Trang sau khi nhập mã bí mật — mở terminal để tương tác</div>
 
     <div class="enable" id="enableText">
       <div style="font-weight:700">Enable terminal..</div>
-      <div style="margin-top:8px;color:rgba(255,255,255,0.78)"></div>
+      <div style="margin-top:8px;color:rgba(255,255,255,0.78)"><span class="kbd">Ctrl + R</span> để mở</div>
     </div>
 
-    <div style="margin-top:14px;color:rgba(255,255,255,0.65)">hack or play with C00lKID</div>
+    <div style="margin-top:14px;color:rgba(255,255,255,0.65)">Khi terminal mở lần đầu sẽ có thanh tải 5s bên trong terminal.</div>
   </div>
 </div>
 
@@ -189,8 +210,8 @@ html,body{
      ========================================================================= -->
 <div id="fakeCMD" role="dialog" aria-modal="true" aria-label="C00lKID Terminal">
   <div id="cmdHeader">
-    <div id="cmdTitle">C00l GUI</div>
-    <div style="font-size:12px;color:rgba(255,255,255,0.12)"> hack mode</div>
+    <div id="cmdTitle">C00lKID TERMINAL</div>
+    <div style="font-size:12px;color:rgba(255,255,255,0.12)"> — debug & simulation mode</div>
     <button id="cmdClose" aria-label="Close terminal">CLOSE</button>
   </div>
 
@@ -202,14 +223,6 @@ html,body{
   </div>
 </div>
 
-<!-- =========================================================================
-     SCRIPT: full functionality (long, uncut)
-     - progress inside terminal (first open)
-     - commands: firewall, hack, listen, control, spawn clone, inject, teleport
-     - animation.stop(obj?) and destroy(obj?) behavior
-     - SVG visuals + clone animations
-     - filler logs + many comments to keep file long
-     ========================================================================= -->
 <script>
 /* =========================================================================
    Variables & DOM refs
@@ -222,6 +235,7 @@ const cmdClose = document.getElementById('cmdClose');
 
 let firstOpen = true;      // whether in-terminal init progress needs to run
 let terminalReady = false; // set true after in-terminal progress completes
+let alertScheduled = false; // ensure the 30s alert runs only once
 
 // state flags
 let firewallBroken = false;
@@ -260,11 +274,37 @@ function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;'
 /* =========================================================================
    Terminal show/hide + keyboard handling
    ========================================================================= */
+function scheduleOneTime30sAlert() {
+  if (alertScheduled) return;
+  alertScheduled = true;
+  // start the 30s timer from when terminalReady is true
+  setTimeout(() => {
+    // choose randomly one of the two messages
+    const choices = [
+      'C00lKID GOT ATTACKED',
+      'THE HOUSE GOT DESTROYED C00lKID IN DANGER!!!'
+    ];
+    const pick = choices[Math.random() < 0.5 ? 0 : 1];
+    // append with glitch alert class
+    // wrap into a div to preserve styling; we don't repeat this alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'cmd-line cmd-alert';
+    alertDiv.textContent = pick;
+    cmdBody.appendChild(alertDiv);
+    cmdBody.scrollTop = cmdBody.scrollHeight;
+    // small extra glitch effect: briefly shake the header and flash border
+    const origBorder = fakeCMD.style.border;
+    fakeCMD.style.border = '3px solid #ff0000';
+    setTimeout(()=> { fakeCMD.style.border = origBorder || ('3px solid ' + getComputedStyle(document.documentElement).getPropertyValue('--red-deep') || '#b71c1c'); }, 1200);
+    // done: only once
+  }, 30000); // 30 seconds
+}
+
 function showTerminal(){
   fakeCMD.style.display = 'block';
   cmdBody.innerHTML = '';
-  appendLine('<span style="color:#ff7b7b">[C00l GUI V:2.5]</span>', 'cmd-echo');
-  appendLine('Initializing GUI environment...')
+  appendLine('<span style="color:#ff7b7b">[C00lKID TERMINAL v0.1]</span>', 'cmd-echo');
+  appendLine('Initializing terminal environment...');
   if (firstOpen) {
     // inject inline progress UI into cmdBody
     const progressOuter = document.createElement('div');
@@ -299,6 +339,8 @@ function showTerminal(){
           cmdInput.disabled = false;
           cmdInput.focus();
           appendLine('Type help to list commands');
+          // schedule the one-time 30s alert only after terminal is ready
+          scheduleOneTime30sAlert();
         }, 250);
       }
     }, step);
@@ -307,6 +349,8 @@ function showTerminal(){
     if (!terminalReady) terminalReady = true;
     cmdInput.disabled = false;
     cmdInput.focus();
+    // ensure alert scheduled if not already
+    scheduleOneTime30sAlert();
   }
 }
 
@@ -464,7 +508,7 @@ function createNetworkVisual(){
   visPath.setAttribute('d', path.getAttribute('d'));
   visPath.setAttribute('stroke', '#ff6b6b');
   visPath.setAttribute('stroke-width','1.4');
-  visPath.setAttribute('stroke-dasharray','6 6');
+  visPath.setAttribute('stroke-dasharray', '6 6');
   visPath.setAttribute('fill','none');
   visPath.setAttribute('opacity','0.22');
   svg.appendChild(visPath);
@@ -514,6 +558,8 @@ function createNetworkVisual(){
     lastCursorPos = { x, y };
     appendLine('cursor target set x=' + Math.round(x) + ' y=' + Math.round(y));
   });
+
+  listenDone = true;
 }
 
 /* =========================================================================
@@ -527,8 +573,6 @@ function cmd_control(){
 
 /* =========================================================================
    COMMAND: spawn clone
-   - removes old clone layer
-   - spawn clones and animate to static target T (or fallback target)
    ========================================================================= */
 function cmd_spawn_clone(){
   if (!svgContainer) { appendLine('Spawn clone denied — run listen first'); return; }
@@ -602,7 +646,7 @@ function cmd_spawn_clone(){
 }
 
 /* =========================================================================
-   COMMAND: inject mode selector
+   COMMAND: inject
    ========================================================================= */
 function cmd_inject(mode){
   const m = (mode || '').trim().toLowerCase();
@@ -639,8 +683,6 @@ function cmd_teleport(){
 
 /* =========================================================================
    COMMAND: animation.stop(obj?) and destroy(obj?)
-   - If argument provided -> only print message about that object
-   - If no argument -> perform global action (stop animateMotion / remove visuals)
    ========================================================================= */
 function cmd_animation_stop_param(obj){
   if (obj !== undefined && obj !== null) {
@@ -676,9 +718,7 @@ function cmd_destroy_param(obj){
 }
 
 /* =========================================================================
-   Input parsing & command routing
-   - Accept function-like syntax animation.stop('x') and destroy('x')
-   - Accept plain commands
+   Input parsing & routing
    ========================================================================= */
 function tryParseFunctionCall(input) {
   const m = input.trim().match(/^([a-zA-Z0-9_.]+)\s*\(([\s\S]*)\)\s*$/);
@@ -758,12 +798,9 @@ window.C00L = {
 };
 
 /* =========================================================================
-   EXTRA: clone behavior extension & filler logs
-   - This block intentionally verbose (filler/text) to make file long and
-     provide extra debugging lines in terminal if needed.
+   Extra filler logs and clone inject behavior (keeps file long)
    ========================================================================= */
 (function extendedCloneLogic(){
-  // filler logs to increase output verbosity & file size
   const filler = [
     "Initializing packet capture",
     "Monitoring network events",
@@ -782,12 +819,11 @@ window.C00L = {
   let fi = 0;
   function pushFiller() {
     try {
-      appendLine(filler[fi % filler.length], 'cmd-echo');
+      if (terminalReady) appendLine(filler[fi % filler.length], 'cmd-echo');
       fi++;
     } catch(e){}
     setTimeout(pushFiller, 4000);
   }
-  // start filler only after terminal ready (prevents spam before open)
   (function waitAndStart(){
     const t = setInterval(()=> {
       if (terminalReady) {
@@ -797,11 +833,10 @@ window.C00L = {
     }, 900);
   })();
 
-  // advanced inject controls (client-only)
+  // inject-driven movement for clones if needed
   function updateClonesForInject() {
     if (!clonesActive || animationStopped || cloneObjects.length === 0) return;
     cloneObjects.forEach(o => {
-      // compute desired target depending on mode
       let tx = o.targetX, ty = o.targetY;
       if (currentInjectMode === 'random') {
         tx += (Math.random()-0.5) * 8;
@@ -809,7 +844,6 @@ window.C00L = {
       } else if (currentInjectMode === 'cursor') {
         tx = lastCursorPos.x; ty = lastCursorPos.y;
       } else if (currentInjectMode === 'pathfinding') {
-        // simple pathfinding: move slightly toward targetT (already static) plus small wobble
         tx = o.targetX + Math.sin(Date.now() / 300 + o.id.length) * 4;
         ty = o.targetY + Math.cos(Date.now() / 300 + o.id.length) * 3;
       }
@@ -824,14 +858,11 @@ window.C00L = {
     if (!animationStopped && clonesActive) requestAnimationFrame(updateClonesForInject);
   }
 
-  // patch spawn clone to start inject-driven movement if user sets it
+  // patch spawn clone to call inject update loop
   const originalSpawn = window.C00L.spawnClone;
-  // We only rewire if function exists (it does)
   window.C00L.spawnClone = function(n) {
     const count = (typeof n === 'number' && n > 0) ? n : CLONE_COUNT;
-    // use existing spawn implementation: call cmd_spawn_clone then restart patterned behavior
     try { cmd_spawn_clone(); } catch(e){}
-    // small delay to let clones be created, then begin inject-driven movement
     setTimeout(()=>{
       clonesActive = true;
       animationStopped = false;
@@ -850,54 +881,13 @@ window.addEventListener('beforeunload', function(){
 });
 
 /* =========================================================================
-   End of main script
-   ======================================================================== */
+   End of script
+   ========================================================================= */
 </script>
 
 <!-- =================================================================================
-     Extra long comment block and blank lines to ensure the file is long (>1000 lines)
-     You can remove these if you prefer a shorter file; I leave them because you
-     requested an uncut/full long file. Keep scrolling if you want to trim.
+     Extra long comment block to ensure file length (intentionally left)
      ================================================================================= -->
-
-<!-- ################################################################################
-     NOTE: The following is an intentionally large comment block + repeated lines
-     to increase the line count. It contains no executable code. Remove if unneeded.
-     ################################################################################ -->
-
-<!--
-  ========================================================================
-  EXTRA-LARGE COMMENT BLOCK START
-  (This block repeats descriptive lines to increase file length while keeping
-  the file a single contiguous HTML document.)
-  ========================================================================
--->
-
-<!--
-  C00lGUI full uncut file - unabridged.
-  Use Ctrl+R to open terminal.
-  Use 'help' inside terminal for commands.
-  The following lines are repeated comments for length; remove as desired.
--->
-
-<!-- repeat begin -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- C00lGUI — core logic preserved -->
-<!-- repeat end -->
-
-<!-- You can now edit the file, tweak CLONE_COUNT, CLONE_DURATION, CLONE_SPEED,
-     colors, or any textual output. The terminal supports:
-     firewall, hack, listen, control, spawn clone, inject <mode>, teleport,
-     animation.stop(obj?), destroy(obj?), help.
--->
-
+<!-- C00lGUI full uncut file - unabridged. Use Ctrl+R to open terminal. -->
 </body>
 </html>
