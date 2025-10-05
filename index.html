@@ -10,7 +10,7 @@
     --panel:#120707;
     --red:#ff3b3b;
     --red-deep:#b71c1c;
-    --muted:rgba(255,255,255,0.85);
+    --muted:rgba(255,255,255,0.90);
     --mono: "Courier New", Courier, monospace;
   }
   *{box-sizing:border-box}
@@ -19,140 +19,67 @@
     color:var(--muted); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
   }
 
-  /* Center card */
-  .center {
-    min-height:100vh;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:24px;
-  }
+  /* Layout */
+  .center { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
   .card {
-    width:920px;
-    max-width:95%;
+    width:980px; max-width:96%;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border:2px solid rgba(255,255,255,0.03);
-    border-radius:14px;
-    padding:34px;
-    text-align:center;
-    box-shadow: 0 20px 80px rgba(0,0,0,0.6);
+    border:1px solid rgba(255,255,255,0.03);
+    border-radius:12px; padding:28px; text-align:center;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
   }
 
-  .title {
-    font-size:28px;
-    letter-spacing:1px;
-    color:var(--red-deep);
-    text-shadow: 0 0 18px rgba(255,80,80,0.18);
-    margin:6px 0 8px 0;
-    font-weight:700;
-  }
-  .sub {
-    color:var(--muted);
-    margin-bottom:22px;
-  }
+  .title { font-size:28px; color:var(--red-deep); margin:0 0 6px 0; font-weight:700; text-shadow:0 0 14px rgba(255,80,80,0.14); }
+  .sub { color:rgba(255,255,255,0.78); margin-bottom:16px; }
 
-  .big {
-    font-size:20px;
-    color:#fff;
-    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
-    padding:18px;
-    border-radius:10px;
-    border:1px solid rgba(255,255,255,0.02);
+  /* load area */
+  #loadBox {
+    background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    border-radius:10px; padding:18px; border:1px solid rgba(255,255,255,0.02);
   }
-
-  .hint {
-    margin-top:14px;
-    color:rgba(255,255,255,0.6);
-    font-size:13px;
+  #progressBar {
+    width:80%; height:14px; margin:12px auto 8px auto; background:rgba(255,255,255,0.02);
+    border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,0.03);
   }
+  #progressFill { height:100%; width:0%; background: linear-gradient(90deg,var(--red),var(--red-deep)); transition:width 120ms linear; }
+  #progressText { font-size:13px; color:rgba(255,255,255,0.78); margin-top:8px; }
 
-  /* Fake terminal overlay */
+  .hint { margin-top:12px; color:rgba(255,255,255,0.66); font-size:13px; }
+
+  /* Fake terminal */
   #fakeCMD {
-    display:none;
-    position:fixed;
-    top:6vh;
-    left:6vw;
-    width:88vw;
-    height:88vh;
-    max-width:1200px;
-    max-height:900px;
-    background: #070404;
-    border: 3px solid var(--red-deep);
-    box-shadow: 0 30px 120px rgba(183,28,28,0.4);
-    z-index:99999;
-    border-radius:10px;
-    overflow:hidden;
-    font-family: var(--mono);
-    color: var(--red);
+    display:none; position:fixed; top:6vh; left:6vw;
+    width:88vw; height:88vh; max-width:1280px; max-height:920px;
+    background: #070404; border: 3px solid var(--red-deep);
+    box-shadow: 0 30px 140px rgba(183,28,28,0.45);
+    z-index:99999; border-radius:10px; overflow:hidden;
+    font-family: var(--mono); color: var(--red);
   }
-  #cmdHeader {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:10px 14px;
-    background: linear-gradient(90deg, rgba(255,0,0,0.04), rgba(255,0,0,0.01));
-    border-bottom:1px solid rgba(255,0,0,0.06);
-  }
+  #cmdHeader { display:flex; align-items:center; gap:12px; padding:12px 16px; background: linear-gradient(90deg, rgba(255,0,0,0.02), rgba(255,0,0,0.01)); border-bottom:1px solid rgba(255,0,0,0.04); }
   #cmdTitle { font-weight:700; color:var(--red-deep); }
-  #cmdClose {
-    margin-left:auto;
-    background:transparent;
-    border:none;
-    color:var(--red);
-    font-weight:700;
-    cursor:pointer;
-    padding:8px 12px;
-    border-radius:6px;
-  }
+  #cmdClose { margin-left:auto; background:transparent; border:none; color:var(--red); font-weight:700; cursor:pointer; padding:8px 12px; border-radius:6px; }
   #cmdClose:hover { background:rgba(255,0,0,0.03); }
 
-  #cmdBody {
-    padding:14px;
-    height: calc(100% - 110px);
-    overflow:auto;
-    white-space:pre-wrap;
-    font-size:14px;
-    line-height:1.45;
-  }
+  #cmdBody { padding:16px; height: calc(100% - 120px); overflow:auto; white-space:pre-wrap; font-size:14px; line-height:1.45; color:var(--muted); }
+  .cmd-line { margin:2px 0; color:var(--muted); }
+  .cmd-echo { color:#ff9b9b; }
+  .cmd-strong { color:#fff; font-weight:700; }
+  #cmdInputWrap { padding:10px 16px 18px 16px; border-top:1px solid rgba(255,0,0,0.03); display:flex; gap:8px; align-items:center; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); }
+  #cmdPrompt { color:var(--red); font-family:var(--mono); font-size:14px; }
+  #cmdInput { flex:1; background:transparent; border:none; outline:none; color:var(--red); font-family:var(--mono); font-size:14px; }
 
-  #cmdInputWrap{
-    padding:10px 14px 18px 14px;
-    border-top:1px solid rgba(255,0,0,0.03);
-    display:flex;
-    gap:8px;
-    align-items:center;
-    background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00));
-  }
-  #cmdPrompt {
-    color:var(--red);
-    font-family:var(--mono);
-    font-size:14px;
-  }
-  #cmdInput {
-    flex:1;
-    background:transparent;
-    border:none;
-    outline:none;
-    color:var(--red);
-    font-family:var(--mono);
-    font-size:14px;
-  }
+  .accessDenied { display:block; margin-top:8px; font-weight:900; font-size:36px; color:#ff4d4d; text-shadow:0 0 18px rgba(255,0,0,0.18); letter-spacing:2px; }
 
-  /* ACCESS DENIED big */
-  .accessDenied {
-    display:block;
-    margin-top:8px;
-    font-weight:900;
-    font-size:36px;
-    color:#ff4d4d;
-    text-shadow: 0 0 18px rgba(255,0,0,0.18);
-    letter-spacing:2px;
-  }
-  /* small helper */
-  .kbd { background:rgba(255,255,255,0.04); padding:2px 6px; border-radius:6px; font-size:12px; color:var(--muted); }
+  /* listen visual placed inside cmdBody when listen runs */
+  .listen-visual { display:flex; justify-content:center; align-items:center; margin:18px 0; width:100%; }
+  .listen-visual svg { width:96%; max-width:1100px; height:auto; display:block; }
 
-  /* SVG listen visual size */
-  #listenSVG { margin-top:22px; display:block; width:960px; max-width:95%; height:320px; }
+  @media (max-width:720px){
+    .card { padding:14px; }
+    #progressBar { width:92%; }
+    .listen-visual svg { width:100%; }
+    #fakeCMD { top:3vh; left:2vw; width:96vw; height:94vh; }
+  }
 </style>
 </head>
 <body>
@@ -161,8 +88,12 @@
       <div class="title">WELCOME BACK C00lKID</div>
       <div class="sub">enable terminal..</div>
 
-      <div class="big" id="loadArea">
-        <!-- load animation placeholder -->
+      <div id="loadBox">
+        <div id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div id="progressFill" aria-hidden="true"></div>
+        </div>
+        <div id="progressText">Initializing terminal: 0%</div>
+        <div class="hint">When initialization completes you can press <span class="kbd">Ctrl + R</span> to open the terminal.</div>
       </div>
     </div>
   </div>
@@ -174,129 +105,337 @@
       <div style="font-size:12px;color:rgba(255,255,255,0.12);"> — debug mode</div>
       <button id="cmdClose" aria-label="Close terminal">CLOSE</button>
     </div>
-    <div id="cmdBody" tabindex="0" aria-live="polite"></div>
+
+    <div id="cmdBody" tabindex="0" aria-live="polite" aria-atomic="false"></div>
+
     <div id="cmdInputWrap">
-      <div id="cmdPrompt">&gt; </div>
-      <input id="cmdInput" autocomplete="off" spellcheck="false" aria-label="Terminal input"/>
+      <div id="cmdPrompt">&gt;</div>
+      <input id="cmdInput" autocomplete="off" spellcheck="false" aria-label="Terminal input" />
     </div>
   </div>
 
-  <!-- SVG listen visual -->
-  <svg id="listenSVG" viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img">
-    <g transform="translate(12,8) scale(3)">
-      <rect x="0" y="0" width="48" height="32" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
-      <rect x="4" y="4" width="40" height="20" fill="#030303"/>
-      <rect x="12" y="24" width="24" height="4" fill="#0b0b0b" stroke="#ff6b6b"/>
-    </g>
-
-    <g transform="translate(112,2) scale(3)">
-      <circle cx="28" cy="28" r="24" fill="#071" stroke="#ff6b6b"/>
-      <path d="M4 28 C12 12, 44 12, 52 28" stroke="#ff6b6b" stroke-width="2" fill="none"/>
-      <path d="M28 4 C24 16, 24 40, 28 52" stroke="#ff6b6b" stroke-width="2" fill="none"/>
-    </g>
-
-    <g transform="translate(212,12) scale(3)">
-      <rect x="0" y="0" width="24" height="24" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
-      <text x="12" y="16" font-size="16" text-anchor="middle" fill="#ff6b6b">T</text>
-    </g>
-
-    <defs>
-      <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">
-        <path d="M0,0 L0,6 L9,3 z" fill="#ff6b6b" />
-      </marker>
-      <path id="arrowPath" d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24" fill="none" stroke="none"/>
-    </defs>
-
-    <path d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24" stroke="#ff6b6b" stroke-width="2" fill="none"
-          stroke-dasharray="5,5" stroke-dashoffset="0">
-      <animate attributeName="stroke-dashoffset" from="0" to="10" dur="0.5s" repeatCount="indefinite"/>
-    </path>
-
-    <circle r="3" fill="#ff6b6b">
-      <animateMotion dur="4s" repeatCount="indefinite">
-        <mpath xlink:href="#arrowPath"/>
-      </animateMotion>
-    </circle>
-  </svg>
-
 <script>
 (function(){
-  const loadArea = document.getElementById('loadArea');
+  // UI refs
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
   const fakeCMD = document.getElementById('fakeCMD');
   const cmdBody = document.getElementById('cmdBody');
   const cmdInput = document.getElementById('cmdInput');
   const cmdClose = document.getElementById('cmdClose');
 
-  // LOAD animation 5s
-  function startLoad(){
-    loadArea.textContent = '';
-    let dots = 0;
-    const interval = setInterval(()=>{
-      loadArea.textContent = 'Loading'+'.'.repeat(dots);
-      dots = (dots+1)%4;
-    }, 500);
-    setTimeout(()=>{
-      clearInterval(interval);
-      loadArea.textContent = '';
-      // terminal ready after load
-      fakeCMD.style.display='block';
-      cmdBody.innerHTML='> Terminal initialized...\n';
-      cmdInput.focus();
-    },5000);
+  // State
+  let mainLoaded = false;
+  let loadingInterval = null;
+
+  // Command state
+  let firewallBroken = false;
+  let listenAvailable = false;
+  let listenDone = false;
+  let controlAllowed = false;
+  let runningHack = false;
+  let hackTimer = null;
+
+  // Store generated passwords to avoid duplicates in session
+  const generatedPasswords = new Set();
+
+  // Nonsense lines for visual output
+  const nonsenseSamples = [
+    "Loading kernel module... OK",
+    "Resolving vector signature: 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
+    "Spawning rogue thread at 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
+    "Buffering entropy... 32%",
+    "Hash collision detected, retrying...",
+    "Allocating virtual page: " + Math.floor(Math.random()*4096),
+    "Patching system call table... done",
+    "Overflowing stack frame... warning",
+    "Decrypting payload chunk 3/8",
+    "Handshake with unknown host established",
+    "Randomizing pointers... OK",
+    "Clearing temp logs",
+    "Flushing CPU cache lines",
+    "Injecting packet to /dev/null",
+    "Kernel panic simulated (test mode)",
+    "Synchronizing with time server... fail",
+    "Forking zombie processes: 7",
+    "Simulating memory leak: +1.2MB",
+    "Overwriting sector 13... done",
+    "Triggering ISR: vector 0x" + Math.floor(Math.random()*255).toString(16)
+  ];
+
+  // Utility: append line to terminal
+  function appendLine(text, cls){
+    const el = document.createElement('div');
+    el.className = cls ? 'cmd-line ' + cls : 'cmd-line';
+    el.innerHTML = text;
+    cmdBody.appendChild(el);
+    cmdBody.scrollTop = cmdBody.scrollHeight;
   }
 
-  startLoad();
+  // Loading / progress bar (5s)
+  function startLoading(){
+    let progress = 0;
+    const duration = 5000;
+    const stepMs = 100;
+    const steps = duration / stepMs;
+    const inc = 100 / steps;
+    progressFill.style.width = '0%';
+    progressText.textContent = 'Initializing terminal: 0%';
+    loadingInterval = setInterval(()=>{
+      progress = Math.min(100, progress + inc);
+      progressFill.style.width = progress + '%';
+      progressText.textContent = 'Initializing terminal: ' + Math.floor(progress) + '%';
+      progressFill.parentElement.setAttribute('aria-valuenow', Math.floor(progress));
+      if(progress >= 100){
+        clearInterval(loadingInterval);
+        mainLoaded = true;
+        progressText.textContent = 'Terminal enabled.';
+        // keep loadBox visible briefly then leave
+        setTimeout(()=> {
+          // don't auto-open; allow Ctrl+R or open via button
+        }, 600);
+      }
+    }, stepMs);
+  }
+  startLoading();
 
-  cmdClose.addEventListener('click',()=>{fakeCMD.style.display='none';});
+  // Show/hide terminal
+  function showTerminal(){
+    if(!mainLoaded){
+      // flash message
+      const orig = progressText.textContent;
+      progressText.textContent = 'Terminal locked — initializing...';
+      progressText.style.color = 'rgba(255,120,120,1)';
+      setTimeout(()=> { progressText.textContent = orig; progressText.style.color = ''; }, 800);
+      return;
+    }
+    fakeCMD.style.display = 'block';
+    cmdBody.innerHTML = '';
+    appendLine('<span class="cmd-echo">[C00lKID TERMINAL v0.1]</span>');
+    appendLine('Type commands: <code>firewall</code>, <code>hack</code>, <code>listen</code>, <code>control</code>.');
+    appendLine('');
+    cmdInput.focus();
+  }
+  function hideTerminal(){
+    fakeCMD.style.display = 'none';
+    // stop hack if running
+    if(runningHack){
+      runningHack = false;
+      if(hackTimer) clearInterval(hackTimer);
+    }
+  }
+  cmdClose.addEventListener('click', hideTerminal);
 
-  // Ctrl+R opens fake terminal
-  window.addEventListener('keydown',e=>{
+  // Prevent reload on Ctrl+R & open terminal instead
+  window.addEventListener('keydown', (e)=>{
     if(e.ctrlKey && e.key.toLowerCase() === 'r'){
       e.preventDefault();
-      fakeCMD.style.display='block';
-      cmdInput.focus();
+      showTerminal();
+    }
+    if(e.key === 'Escape' && fakeCMD.style.display === 'block'){
+      hideTerminal();
     }
   });
 
-  // simple hack/access control logic
-  let hackDone = false;
-  let controlEnabled = false;
-
-  const nonsenseSamples = ["Initializing...","Loading kernel...","Randomizing memory...","Syncing modules..."];
-  function appendLine(text,cls){const el=document.createElement('div'); if(cls) el.className=cls; el.innerHTML=text; cmdBody.appendChild(el); cmdBody.scrollTop=cmdBody.scrollHeight;}
-
-  function runFakeHack(){
-    appendLine('> Executing hack sequence...');
-    let ticks = 0;
-    const maxTicks = 25;
-    const hackTimer = setInterval(()=>{
-      const idx=Math.floor(Math.random()*nonsenseSamples.length);
-      appendLine(nonsenseSamples[idx]);
-      ticks++;
-      if(ticks>=maxTicks){
-        clearInterval(hackTimer);
-        appendLine('<span class="accessDenied">ACCESS DENIED</span>');
-        hackDone = true;
+  // Password generator (unique in session)
+  function genUniquePassword(len = 12){
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
+    for(let attempt=0; attempt<2000; attempt++){
+      let pw = '';
+      for(let i=0;i<len;i++) pw += chars.charAt(Math.floor(Math.random()*chars.length));
+      if(!generatedPasswords.has(pw)){
+        generatedPasswords.add(pw);
+        return pw;
       }
-    },200);
+    }
+    // fallback
+    let fallback = '';
+    for(let i=0;i<len;i++) fallback += chars.charAt(Math.floor(Math.random()*chars.length));
+    generatedPasswords.add(fallback);
+    return fallback;
   }
 
+  // Run fake hack: ~5s nonsense lines
+  function runFakeHack(){
+    if(runningHack) { appendLine('Hack already running...'); return; }
+    runningHack = true;
+    appendLine('&gt; Executing hack sequence...');
+    let ticks = 0; const maxTicks = 25;
+    hackTimer = setInterval(()=>{
+      const lines = 1 + Math.floor(Math.random()*2);
+      for(let i=0;i<lines;i++){
+        const idx = Math.floor(Math.random()*nonsenseSamples.length);
+        const text = nonsenseSamples[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999));
+        appendLine(text);
+      }
+      ticks++;
+      if(ticks >= maxTicks || !runningHack){
+        clearInterval(hackTimer);
+        runningHack = false;
+        if(!firewallBroken){
+          appendLine('');
+          appendLine('<span class="accessDenied">ACCESS DENIED</span>');
+        } else {
+          // success -> generate target password and enable listen
+          const pw = genUniquePassword(12);
+          appendLine('');
+          appendLine('<span class="cmd-strong">target password: ' + pw + '</span>');
+          listenAvailable = true;
+          listenDone = false;
+          controlAllowed = false;
+          appendLine('(run <code>listen</code> next to map network; then <code>control</code> will be allowed)');
+        }
+        cmdInput.focus();
+      }
+    }, 200);
+  }
+
+  // Firewall breaker
   function runFirewall(){
-    if(!hackDone) return appendLine('Cannot control yet, hack first.');
-    const ip = 'target password: '+(Math.floor(Math.random()*999999)+100000);
-    appendLine(ip);
+    if(firewallBroken){
+      appendLine('Firewall already disabled.');
+      return;
+    }
+    firewallBroken = true;
+    appendLine('Firewall breaker engaged. You may now run <code>hack</code>.');
   }
 
-  cmdInput.addEventListener('keydown', e=>{
-    if(e.key==='Enter'){
-      const val=cmdInput.value.trim().toLowerCase();
-      appendLine('&gt; '+val);
-      cmdInput.value='';
-      if(val==='hack') runFakeHack();
-      if(val==='control') appendLine(hackDone?'Control established.':'Cannot control yet.');
-      if(val==='listen') runFirewall();
+  // Listen: must be after successful hack (listenAvailable)
+  function runListen(){
+    if(!listenAvailable){
+      appendLine('Listen denied — no target discovered. Run <code>firewall</code> then <code>hack</code> first.');
+      return;
+    }
+    if(listenDone){
+      appendLine('Listen already completed.');
+      return;
+    }
+
+    appendLine('&gt; Listening for network endpoints...');
+    let ticks = 0; const maxTicks = 14;
+    const t = setInterval(()=>{
+      const idx = Math.floor(Math.random()*nonsenseSamples.length);
+      appendLine(nonsenseSamples[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999)));
+      ticks++;
+      if(ticks >= maxTicks){
+        clearInterval(t);
+        // Insert large SVG visual (scale x3) into terminal body
+        const wrapper = document.createElement('div');
+        wrapper.className = 'listen-visual';
+        wrapper.innerHTML = `
+          <svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+            <!-- computer -->
+            <g transform="translate(12,8) scale(3)">
+              <rect x="0" y="0" width="48" height="32" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
+              <rect x="4" y="4" width="40" height="20" fill="#030303"/>
+              <rect x="12" y="24" width="24" height="4" fill="#0b0b0b" stroke="#ff6b6b"/>
+            </g>
+
+            <!-- globe -->
+            <g transform="translate(112,2) scale(3)">
+              <circle cx="28" cy="28" r="24" fill="#071" stroke="#ff6b6b"/>
+              <path d="M4 28 C12 12, 44 12, 52 28" stroke="#ff6b6b" stroke-width="2" fill="none"/>
+              <path d="M28 4 C24 16, 24 40, 28 52" stroke="#ff6b6b" stroke-width="2" fill="none"/>
+            </g>
+
+            <!-- target -->
+            <g transform="translate(212,12) scale(3)">
+              <rect x="0" y="0" width="24" height="24" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
+              <text x="12" y="16" font-size="16" text-anchor="middle" fill="#ff6b6b">T</text>
+            </g>
+
+            <!-- path for arrow motion (single smooth path computer->globe->target) -->
+            <defs>
+              <marker id="arrow" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L9,3 z" fill="#ff6b6b"/>
+              </marker>
+
+              <!-- animation path used by animateMotion -->
+              <path id="motionPath" d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24" fill="none" stroke="none"/>
+            </defs>
+
+            <!-- visible stroked path -->
+            <path d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24"
+                  stroke="#ff6b6b" stroke-width="2" fill="none" stroke-dasharray="8 6">
+              <animate attributeName="stroke-dashoffset" from="0" to="14" dur="0.8s" repeatCount="indefinite"/>
+            </path>
+
+            <!-- moving marker (arrow head) -->
+            <g>
+              <circle r="3" fill="#ff6b6b">
+                <animateMotion dur="3.6s" repeatCount="indefinite" rotate="auto">
+                  <mpath xlink:href="#motionPath"/>
+                </animateMotion>
+              </circle>
+            </g>
+          </svg>
+        `;
+        // Append into terminal
+        cmdBody.appendChild(wrapper);
+        // finalize state
+        listenDone = true;
+        controlAllowed = true;
+        appendLine('');
+        appendLine('(listen complete — control available)');
+        cmdInput.focus();
+      }
+    }, 200);
+  }
+
+  // Control: can run only after listenDone
+  function runControl(){
+    if(!controlAllowed){
+      appendLine('Control denied — run <code>listen</code> after a successful <code>hack</code> to enable control.');
+      return;
+    }
+    appendLine('[CONTROL MODE ENGAGED]');
+    let ticks = 0; const max = 15;
+    const t = setInterval(()=>{
+      const idx = Math.floor(Math.random()*nonsenseSamples.length);
+      appendLine(nonsenseSamples[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999)));
+      ticks++;
+      if(ticks >= max){
+        clearInterval(t);
+        appendLine('[CONTROL TERMINATED]');
+        cmdInput.focus();
+      }
+    }, 200);
+  }
+
+  // Command handler
+  function handleCommand(raw){
+    const cmd = raw.trim().toLowerCase();
+    if(cmd === '') return;
+    appendLine('&gt; ' + escapeHtml(raw));
+    if(cmd === 'firewall') { runFirewall(); return; }
+    if(cmd === 'hack') { runFakeHack(); return; }
+    if(cmd === 'listen') { runListen(); return; }
+    if(cmd === 'control') { runControl(); return; }
+    appendLine('Unknown command: ' + escapeHtml(raw));
+  }
+
+  // Input key handling
+  cmdInput.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter'){
+      const val = cmdInput.value;
+      cmdInput.value = '';
+      if(!mainLoaded) { appendLine('Terminal not ready.'); return; }
+      handleCommand(val);
+    } else if(e.key === 'Escape'){
+      hideTerminal();
     }
   });
+
+  function escapeHtml(s){
+    return s.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
+  }
+
+  // initial focus helpers
+  // allow clicking on load area to open terminal when ready
+  document.getElementById('loadBox').addEventListener('click', ()=>{
+    if(mainLoaded) showTerminal();
+  });
+
 })();
 </script>
 </body>
