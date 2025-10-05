@@ -72,14 +72,14 @@
   .listen-visual { display:flex; justify-content:center; align-items:center; margin:18px 0; width:100%; position:relative; }
   .listen-visual svg { width:88%; max-width:760px; height:auto; display:block; }
 
-  /* control-virus visual */
-  .virus-visual { display:flex; justify-content:center; align-items:center; margin:12px 0; width:100%; position:relative; }
-  .virus-visual svg { width:88%; max-width:760px; height:auto; display:block; }
+  /* virus and teleport visuals */
+  .virus-visual, .teleport-visual, .clone-visual { display:flex; justify-content:center; align-items:center; margin:12px 0; width:100%; position:relative; }
+  .virus-visual svg, .teleport-visual svg, .clone-visual svg { width:88%; max-width:760px; height:auto; display:block; }
 
   @media (max-width:720px){
     .card { padding:14px; }
     #progressBar { width:92%; }
-    .listen-visual svg, .virus-visual svg { width:100%; }
+    .listen-visual svg, .virus-visual svg, .teleport-visual svg, .clone-visual svg { width:100%; }
     #fakeCMD { top:3vh; left:2vw; width:96vw; height:94vh; }
   }
 </style>
@@ -137,6 +137,7 @@
   let controlAllowed = false;
   let runningHack = false;
   let hackTimer = null;
+  let controlRan = false;
 
   const generatedPasswords = new Set();
 
@@ -323,11 +324,13 @@
   <!-- hidden motion path in defs -->
   <defs>
     <path id="motionPath" d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24" fill="none" stroke="none"/>
+    <!-- reverse path for teleport (T -> user) -->
+    <path id="motionPathReverse" d="M212,24 C184,36 156,36 128,36 C80,24 36,24 36,24" fill="none" stroke="none"/>
   </defs>
 
-  <!-- visible dashed path (optional visual hint) -->
+  <!-- visible dashed path -->
   <path d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24"
-        stroke="#ff6b6b" stroke-width="2" fill="none" stroke-dasharray="8 6">
+        stroke="#ff6b6b" stroke-width="2" fill="none" stroke-dasharray="8 6" opacity="0.25">
     <animate attributeName="stroke-dashoffset" from="0" to="14" dur="0.8s" repeatCount="indefinite"/>
   </path>
 
@@ -398,7 +401,7 @@
 
   <!-- optional faint path to show route -->
   <path d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24"
-        stroke="#ff6b6b" stroke-width="1" fill="none" opacity="0.15" stroke-dasharray="6 6"/>
+        stroke="#ff6b6b" stroke-width="1" fill="none" opacity="0.12" stroke-dasharray="6 6"/>
 
   <!-- virus group on top that follows the motion path -->
   <g>
@@ -413,7 +416,7 @@
     cmdBody.appendChild(vwrap);
     cmdBody.scrollTop = cmdBody.scrollHeight;
 
-    // run simulated control output in parallel (loopy lines) while virus moves
+    // run simulated control output in parallel while virus moves
     let ticks = 0; const max = 18;
     const ctl = setInterval(()=>{
       const idx = Math.floor(Math.random()*nonsenseSamples.length);
@@ -422,10 +425,136 @@
       if(ticks >= max){
         clearInterval(ctl);
         appendLine('[CONTROL TERMINATED]');
-        // leave virus SVG in place (it finished its animateMotion due to fill="freeze")
+        controlRan = true;
         cmdInput.focus();
       }
     }, 200);
+  }
+
+  // teleport: requires controlRan true
+  function runTeleport(){
+    if(!controlRan){ appendLine('Teleport denied — run control first'); return; }
+
+    appendLine('> Establishing teleport sequence', 'cmd-echo');
+    // create teleport svg showing a particle moving from T back along reverse path to user
+    const twrap = document.createElement('div');
+    twrap.className = 'teleport-visual';
+    twrap.innerHTML = `
+<svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+  <!-- minimal scene so particle appears over route -->
+  <g transform="translate(12,8) scale(1)">
+    <rect x="0" y="0" width="48" height="32" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
+  </g>
+  <g transform="translate(112,2) scale(1)">
+    <circle cx="28" cy="28" r="24" fill="#071" stroke="#ff6b6b"/>
+  </g>
+  <g transform="translate(212,12) scale(1)">
+    <rect x="0" y="0" width="24" height="24" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
+    <text x="12" y="16" font-size="16" text-anchor="middle" fill="#ff6b6b">T</text>
+  </g>
+
+  <defs>
+    <path id="motionPathReverseControl" d="M212,24 C184,36 156,36 128,36 C80,24 36,24 36,24" fill="none" stroke="none"/>
+  </defs>
+
+  <!-- faint route -->
+  <path d="M212,24 C184,36 156,36 128,36 C80,24 36,24 36,24" stroke="#ff6b6b" stroke-width="1" fill="none" opacity="0.08" stroke-dasharray="6 6"/>
+
+  <!-- teleport particle traveling from T to user -->
+  <g>
+    <circle r="4" fill="#ff6b6b" opacity="0.95">
+      <animateMotion dur="2.6s" repeatCount="1" rotate="auto" fill="freeze">
+        <mpath xlink:href="#motionPathReverseControl"/>
+      </animateMotion>
+    </circle>
+  </g>
+</svg>
+    `;
+    cmdBody.appendChild(twrap);
+    cmdBody.scrollTop = cmdBody.scrollHeight;
+
+    // print progress
+    let p = 0;
+    const pT = setInterval(()=>{
+      p += 20;
+      appendLine('establishing teleport progress ' + p + '%');
+      if(p >= 100){
+        clearInterval(pT);
+        appendLine('transfer complete');
+        cmdInput.focus();
+      }
+    }, 520);
+  }
+
+  // spawn clone: requires controlRan true
+  function runSpawnClone(){
+    if(!controlRan){ appendLine('Spawn clone denied — run control first'); return; }
+
+    appendLine('> Spawning clone from target', 'cmd-echo');
+
+    // create clone svg: multiple small dots emanate from T then settle
+    const cwrap = document.createElement('div');
+    cwrap.className = 'clone-visual';
+    cwrap.innerHTML = `
+<svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+  <g transform="translate(212,12) scale(1)">
+    <rect x="0" y="0" width="24" height="24" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
+    <text x="12" y="16" font-size="16" text-anchor="middle" fill="#ff6b6b">T</text>
+  </g>
+
+  <defs>
+    <!-- short radial paths for clones to travel outward -->
+    <path id="c1" d="M212,24 l-20 -8" fill="none" stroke="none"/>
+    <path id="c2" d="M212,24 l-18 6" fill="none" stroke="none"/>
+    <path id="c3" d="M212,24 l-28 0" fill="none" stroke="none"/>
+    <path id="c4" d="M212,24 l-24 -14" fill="none" stroke="none"/>
+    <path id="c5" d="M212,24 l-30 10" fill="none" stroke="none"/>
+  </defs>
+
+  <!-- clones (small dots) -->
+  <g>
+    <circle r="3" fill="#ff6b6b" cx="212" cy="24">
+      <animateMotion dur="1.2s" repeatCount="1" fill="freeze">
+        <mpath xlink:href="#c1"/>
+      </animateMotion>
+    </circle>
+    <circle r="3" fill="#ff6b6b" cx="212" cy="24">
+      <animateMotion dur="1.3s" begin="0.05s" repeatCount="1" fill="freeze">
+        <mpath xlink:href="#c2"/>
+      </animateMotion>
+    </circle>
+    <circle r="3" fill="#ff6b6b" cx="212" cy="24">
+      <animateMotion dur="1.4s" begin="0.1s" repeatCount="1" fill="freeze">
+        <mpath xlink:href="#c3"/>
+      </animateMotion>
+    </circle>
+    <circle r="3" fill="#ff6b6b" cx="212" cy="24">
+      <animateMotion dur="1.25s" begin="0.07s" repeatCount="1" fill="freeze">
+        <mpath xlink:href="#c4"/>
+      </animateMotion>
+    </circle>
+    <circle r="3" fill="#ff6b6b" cx="212" cy="24">
+      <animateMotion dur="1.35s" begin="0.12s" repeatCount="1" fill="freeze">
+        <mpath xlink:href="#c5"/>
+      </animateMotion>
+    </circle>
+  </g>
+</svg>
+    `;
+    cmdBody.appendChild(cwrap);
+    cmdBody.scrollTop = cmdBody.scrollHeight;
+
+    // simulate cloning progress
+    let step = 0;
+    const s = setInterval(()=>{
+      step++;
+      appendLine('cloning target chunk ' + step + ' of 5');
+      if(step >= 5){
+        clearInterval(s);
+        appendLine('clone complete');
+        cmdInput.focus();
+      }
+    }, 450);
   }
 
   // commands handler
@@ -437,6 +566,8 @@
     if(cmd === 'hack'){ runFakeHack(); return; }
     if(cmd === 'listen'){ runListen(); return; }
     if(cmd === 'control'){ runControl(); return; }
+    if(cmd === 'teleport'){ runTeleport(); return; }
+    if(cmd === 'spawn clone' || cmd === 'spawn' || cmd === 'clone'){ runSpawnClone(); return; }
     appendLine('Unknown command ' + raw);
   }
 
