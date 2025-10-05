@@ -177,10 +177,10 @@ html,body{
 
     <div class="enable" id="enableText">
       <div style="font-weight:700">Enable terminal..</div>
-      <div style="margin-top:8px;color:rgba(255,255,255,0.78)">hack or play with C00lKID</div>
+      <div style="margin-top:8px;color:rgba(255,255,255,0.78)"></div>
     </div>
 
-    <div style="margin-top:14px;color:rgba(255,255,255,0.65)">LOADING...</div>
+    <div style="margin-top:14px;color:rgba(255,255,255,0.65)">hack or play with C00lKID</div>
   </div>
 </div>
 
@@ -263,8 +263,8 @@ function escapeHtml(s) { return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;'
 function showTerminal(){
   fakeCMD.style.display = 'block';
   cmdBody.innerHTML = '';
-  appendLine('<span style="color:#ff7b7b">[C00lKID TERMINAL v0.1]</span>', 'cmd-echo');
-  appendLine('Initializing terminal environment...');
+  appendLine('<span style="color:#ff7b7b">[C00l GUI V:2.5]</span>', 'cmd-echo');
+  appendLine('Initializing GUI environment...')
   if (firstOpen) {
     // inject inline progress UI into cmdBody
     const progressOuter = document.createElement('div');
