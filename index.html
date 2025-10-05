@@ -7,7 +7,6 @@
 <style>
   :root{
     --bg:#0b0b0b;
-    --panel:#120707;
     --red:#ff3b3b;
     --red-deep:#b71c1c;
     --muted:rgba(255,255,255,0.90);
@@ -22,29 +21,27 @@
   /* Layout */
   .center { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
   .card {
-    width:980px; max-width:96%;
+    width:920px; max-width:96%;
     background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
     border:1px solid rgba(255,255,255,0.03);
-    border-radius:12px; padding:28px; text-align:center;
+    border-radius:12px; padding:24px; text-align:center;
     box-shadow: 0 30px 80px rgba(0,0,0,0.6);
   }
 
-  .title { font-size:28px; color:var(--red-deep); margin:0 0 6px 0; font-weight:700; text-shadow:0 0 14px rgba(255,80,80,0.14); }
-  .sub { color:rgba(255,255,255,0.78); margin-bottom:16px; }
+  .title { font-size:26px; color:var(--red-deep); margin:0 0 6px 0; font-weight:700; text-shadow:0 0 14px rgba(255,80,80,0.14); }
+  .sub { color:rgba(255,255,255,0.78); margin-bottom:12px; }
 
   /* load area */
   #loadBox {
     background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
-    border-radius:10px; padding:18px; border:1px solid rgba(255,255,255,0.02);
+    border-radius:10px; padding:16px; border:1px solid rgba(255,255,255,0.02);
   }
   #progressBar {
-    width:80%; height:14px; margin:12px auto 8px auto; background:rgba(255,255,255,0.02);
+    width:84%; height:14px; margin:12px auto 8px auto; background:rgba(255,255,255,0.02);
     border-radius:8px; overflow:hidden; border:1px solid rgba(255,255,255,0.03);
   }
   #progressFill { height:100%; width:0%; background: linear-gradient(90deg,var(--red),var(--red-deep)); transition:width 120ms linear; }
   #progressText { font-size:13px; color:rgba(255,255,255,0.78); margin-top:8px; }
-
-  .hint { margin-top:12px; color:rgba(255,255,255,0.66); font-size:13px; }
 
   /* Fake terminal */
   #fakeCMD {
@@ -53,16 +50,16 @@
     background: #070404; border: 3px solid var(--red-deep);
     box-shadow: 0 30px 140px rgba(183,28,28,0.45);
     z-index:99999; border-radius:10px; overflow:hidden;
-    font-family: var(--mono); color: var(--red);
+    font-family: var(--mono);
   }
   #cmdHeader { display:flex; align-items:center; gap:12px; padding:12px 16px; background: linear-gradient(90deg, rgba(255,0,0,0.02), rgba(255,0,0,0.01)); border-bottom:1px solid rgba(255,0,0,0.04); }
   #cmdTitle { font-weight:700; color:var(--red-deep); }
   #cmdClose { margin-left:auto; background:transparent; border:none; color:var(--red); font-weight:700; cursor:pointer; padding:8px 12px; border-radius:6px; }
   #cmdClose:hover { background:rgba(255,0,0,0.03); }
 
-  /* make all terminal lines red */
-  #cmdBody { padding:16px; height: calc(100% - 120px); overflow:auto; white-space:pre-wrap; font-size:14px; line-height:1.45; color:var(--red); }
-  .cmd-line { color:var(--red); margin:2px 0; font-family:var(--mono); }
+  /* terminal text all red */
+  #cmdBody { padding:16px; height: calc(100% - 120px); overflow:auto; white-space:pre-wrap; font-size:14px; line-height:1.45; color:var(--red); background:#040303; }
+  .cmd-line { color:var(--red); margin:4px 0; font-family:var(--mono); }
   .cmd-echo { color:var(--red); }
   .cmd-strong { color:var(--red); font-weight:700; }
   .accessDenied { display:block; margin-top:8px; font-weight:900; font-size:36px; color:#ff4d4d; text-shadow:0 0 18px rgba(255,0,0,0.18); letter-spacing:2px; }
@@ -71,9 +68,9 @@
   #cmdPrompt { color:var(--red); font-family:var(--mono); font-size:14px; }
   #cmdInput { flex:1; background:transparent; border:none; outline:none; color:var(--red); font-family:var(--mono); font-size:14px; }
 
-  /* listen visual placed inside cmdBody when listen runs */
+  /* listen visual inside terminal */
   .listen-visual { display:flex; justify-content:center; align-items:center; margin:18px 0; width:100%; }
-  .listen-visual svg { width:96%; max-width:1100px; height:auto; display:block; }
+  .listen-visual svg { width:88%; max-width:760px; height:auto; display:block; }
 
   @media (max-width:720px){
     .card { padding:14px; }
@@ -89,12 +86,11 @@
       <div class="title">WELCOME BACK C00lKID</div>
       <div class="sub">enable terminal..</div>
 
-      <div id="loadBox">
+      <div id="loadBox" aria-hidden="false">
         <div id="progressBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
           <div id="progressFill" aria-hidden="true"></div>
         </div>
         <div id="progressText">Initializing terminal 0%</div>
-        <!-- hint removed as requested -->
       </div>
     </div>
   </div>
@@ -117,19 +113,20 @@
 
 <script>
 (function(){
-  // UI refs
+  // refs
   const progressFill = document.getElementById('progressFill');
   const progressText = document.getElementById('progressText');
   const fakeCMD = document.getElementById('fakeCMD');
   const cmdBody = document.getElementById('cmdBody');
   const cmdInput = document.getElementById('cmdInput');
   const cmdClose = document.getElementById('cmdClose');
+  const loadBox = document.getElementById('loadBox');
 
-  // State
+  // state
   let mainLoaded = false;
   let loadingInterval = null;
 
-  // Command state
+  // command states
   let firewallBroken = false;
   let listenAvailable = false;
   let listenDone = false;
@@ -137,16 +134,14 @@
   let runningHack = false;
   let hackTimer = null;
 
-  // Store generated passwords to avoid duplicates in session
   const generatedPasswords = new Set();
 
-  // Nonsense lines for visual output
   const nonsenseSamples = [
-    "Loading kernel module... OK",
+    "Loading kernel module OK",
     "Resolving vector signature 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
     "Spawning rogue thread at 0x" + Math.floor(Math.random()*0xFFFF).toString(16),
     "Buffering entropy 32%",
-    "Hash collision detected, retrying",
+    "Hash collision detected retrying",
     "Allocating virtual page " + Math.floor(Math.random()*4096),
     "Patching system call table done",
     "Overflowing stack frame warning",
@@ -164,23 +159,22 @@
     "Triggering ISR vector 0x" + Math.floor(Math.random()*255).toString(16)
   ];
 
-  // Utility: append line to terminal (all lines are red by CSS)
+  // append (all displayed text will have ':' removed)
   function appendLine(text, cls){
     const el = document.createElement('div');
     el.className = cls ? 'cmd-line ' + cls : 'cmd-line';
-    // remove any literal ":" characters from displayed text (global)
     const safe = String(text).replace(/:/g, '');
     el.innerHTML = safe;
     cmdBody.appendChild(el);
     cmdBody.scrollTop = cmdBody.scrollHeight;
   }
 
-  // Loading / progress bar (5s)
+  // loading progress 5s
   function startLoading(){
     let progress = 0;
     const duration = 5000;
-    const stepMs = 100;
-    const steps = duration / stepMs;
+    const step = 100;
+    const steps = duration / step;
     const inc = 100 / steps;
     progressFill.style.width = '0%';
     progressText.textContent = 'Initializing terminal 0%';
@@ -194,24 +188,23 @@
         mainLoaded = true;
         progressText.textContent = 'Terminal enabled';
       }
-    }, stepMs);
+    }, step);
   }
   startLoading();
 
-  // Show/hide terminal
+  // show/hide terminal
   function showTerminal(){
     if(!mainLoaded){
       const orig = progressText.textContent;
       progressText.textContent = 'Terminal locked — initializing';
       progressText.style.color = 'rgba(255,120,120,1)';
-      setTimeout(()=> { progressText.textContent = orig; progressText.style.color = ''; }, 800);
+      setTimeout(()=>{ progressText.textContent = orig; progressText.style.color = ''; }, 700);
       return;
     }
     fakeCMD.style.display = 'block';
     cmdBody.innerHTML = '';
     appendLine('[C00lKID TERMINAL v0.1]', 'cmd-echo');
-    // removed the "Type commands" line as requested
-    appendLine('', '');
+    // no instructions line as requested
     cmdInput.focus();
   }
   function hideTerminal(){
@@ -223,7 +216,7 @@
   }
   cmdClose.addEventListener('click', hideTerminal);
 
-  // Prevent reload on Ctrl+R & open terminal instead
+  // block reload and open terminal on Ctrl+R
   window.addEventListener('keydown', (e)=>{
     if(e.ctrlKey && e.key.toLowerCase() === 'r'){
       e.preventDefault();
@@ -234,24 +227,20 @@
     }
   });
 
-  // Password generator (unique in session)
+  // unique password generator
   function genUniquePassword(len = 12){
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-_=+";
-    for(let attempt=0; attempt<2000; attempt++){
+    for(let a=0;a<2000;a++){
       let pw = '';
       for(let i=0;i<len;i++) pw += chars.charAt(Math.floor(Math.random()*chars.length));
-      if(!generatedPasswords.has(pw)){
-        generatedPasswords.add(pw);
-        return pw;
-      }
+      if(!generatedPasswords.has(pw)){ generatedPasswords.add(pw); return pw; }
     }
-    let fallback = '';
-    for(let i=0;i<len;i++) fallback += chars.charAt(Math.floor(Math.random()*chars.length));
-    generatedPasswords.add(fallback);
-    return fallback;
+    let fb = '';
+    for(let i=0;i<len;i++) fb += chars.charAt(Math.floor(Math.random()*chars.length));
+    generatedPasswords.add(fb); return fb;
   }
 
-  // Run fake hack: ~5s nonsense lines
+  // hack (5s nonsense); if firewallBroken false -> ACCESS DENIED, else generate password and enable listen
   function runFakeHack(){
     if(runningHack) { appendLine('Hack already running'); return; }
     runningHack = true;
@@ -261,8 +250,7 @@
       const lines = 1 + Math.floor(Math.random()*2);
       for(let i=0;i<lines;i++){
         const idx = Math.floor(Math.random()*nonsenseSamples.length);
-        const text = nonsenseSamples[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999));
-        appendLine(text);
+        appendLine(nonsenseSamples[idx].replace(/\d+/g, ()=>Math.floor(Math.random()*9999)));
       }
       ticks++;
       if(ticks >= maxTicks || !runningHack){
@@ -285,28 +273,19 @@
     }, 200);
   }
 
-  // Firewall breaker
+  // firewall
   function runFirewall(){
-    if(firewallBroken){
-      appendLine('Firewall already disabled');
-      return;
-    }
+    if(firewallBroken){ appendLine('Firewall already disabled'); return; }
     firewallBroken = true;
-    appendLine('Firewall breaker engaged. You may now run hack');
+    appendLine('Firewall breaker engaged You may now run hack');
   }
 
-  // Listen: must be after successful hack (listenAvailable)
+  // listen: requires listenAvailable; shows SVG (path hidden in defs) and places arrow on top
   function runListen(){
-    if(!listenAvailable){
-      appendLine('Listen denied — no target discovered. Run firewall then hack first');
-      return;
-    }
-    if(listenDone){
-      appendLine('Listen already completed');
-      return;
-    }
+    if(!listenAvailable){ appendLine('Listen denied — no target discovered Run firewall then hack first'); return; }
+    if(listenDone){ appendLine('Listen already completed'); return; }
 
-    appendLine('&gt; Listening for network endpoints', 'cmd-echo');
+    appendLine('> Listening for network endpoints', 'cmd-echo');
     let ticks = 0; const maxTicks = 14;
     const t = setInterval(()=>{
       const idx = Math.floor(Math.random()*nonsenseSamples.length);
@@ -314,53 +293,51 @@
       ticks++;
       if(ticks >= maxTicks){
         clearInterval(t);
+        // create visual (SVG) inserted inside terminal; path is in defs (hidden), arrow drawn after objects so it appears on top
         const wrapper = document.createElement('div');
         wrapper.className = 'listen-visual';
         wrapper.innerHTML = `
-          <svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
-            <!-- computer -->
-            <g transform="translate(12,8) scale(3)">
-              <rect x="0" y="0" width="48" height="32" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
-              <rect x="4" y="4" width="40" height="20" fill="#030303"/>
-              <rect x="12" y="24" width="24" height="4" fill="#0b0b0b" stroke="#ff6b6b"/>
-            </g>
+<svg viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-hidden="true">
+  <!-- computer -->
+  <g transform="translate(12,8) scale(1)">
+    <rect x="0" y="0" width="48" height="32" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
+    <rect x="4" y="4" width="40" height="20" fill="#030303"/>
+    <rect x="12" y="24" width="24" height="4" fill="#0b0b0b" stroke="#ff6b6b"/>
+  </g>
 
-            <!-- globe -->
-            <g transform="translate(112,2) scale(3)">
-              <circle cx="28" cy="28" r="24" fill="#071" stroke="#ff6b6b"/>
-              <path d="M4 28 C12 12, 44 12, 52 28" stroke="#ff6b6b" stroke-width="2" fill="none"/>
-              <path d="M28 4 C24 16, 24 40, 28 52" stroke="#ff6b6b" stroke-width="2" fill="none"/>
-            </g>
+  <!-- globe -->
+  <g transform="translate(112,2) scale(1)">
+    <circle cx="28" cy="28" r="24" fill="#071" stroke="#ff6b6b"/>
+    <path d="M4 28 C12 12, 44 12, 52 28" stroke="#ff6b6b" stroke-width="2" fill="none"/>
+    <path d="M28 4 C24 16, 24 40, 28 52" stroke="#ff6b6b" stroke-width="2" fill="none"/>
+  </g>
 
-            <!-- target -->
-            <g transform="translate(212,12) scale(3)">
-              <rect x="0" y="0" width="24" height="24" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
-              <text x="12" y="16" font-size="16" text-anchor="middle" fill="#ff6b6b">T</text>
-            </g>
+  <!-- target -->
+  <g transform="translate(212,12) scale(1)">
+    <rect x="0" y="0" width="24" height="24" rx="4" ry="4" fill="#111" stroke="#ff6b6b"/>
+    <text x="12" y="16" font-size="16" text-anchor="middle" fill="#ff6b6b">T</text>
+  </g>
 
-            <!-- path for arrow motion (single smooth path computer->globe->target) -->
-            <defs>
-              <marker id="arrow" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto">
-                <path d="M0,0 L0,6 L9,3 z" fill="#ff6b6b"/>
-              </marker>
-              <path id="motionPath" d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24" fill="none" stroke="none"/>
-            </defs>
+  <!-- hidden motion path in defs -->
+  <defs>
+    <path id="motionPath" d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24" fill="none" stroke="none"/>
+  </defs>
 
-            <!-- visible stroked path -->
-            <path d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24"
-                  stroke="#ff6b6b" stroke-width="2" fill="none" stroke-dasharray="8 6">
-              <animate attributeName="stroke-dashoffset" from="0" to="14" dur="0.8s" repeatCount="indefinite"/>
-            </path>
+  <!-- visible dashed path (optional visual hint) -->
+  <path d="M36,24 C80,24 128,36 156,36 C184,36 212,24 212,24"
+        stroke="#ff6b6b" stroke-width="2" fill="none" stroke-dasharray="8 6">
+    <animate attributeName="stroke-dashoffset" from="0" to="14" dur="0.8s" repeatCount="indefinite"/>
+  </path>
 
-            <!-- moving marker (dot) -->
-            <g>
-              <circle r="3" fill="#ff6b6b">
-                <animateMotion dur="3.6s" repeatCount="indefinite" rotate="auto">
-                  <mpath xlink:href="#motionPath"/>
-                </animateMotion>
-              </circle>
-            </g>
-          </svg>
+  <!-- moving arrow polygon placed last so it's on top -->
+  <g>
+    <polygon points="0,0 0,6 9,3" fill="#ff6b6b">
+      <animateMotion dur="3.6s" repeatCount="indefinite" rotate="auto">
+        <mpath xlink:href="#motionPath"/>
+      </animateMotion>
+    </polygon>
+  </g>
+</svg>
         `;
         cmdBody.appendChild(wrapper);
         listenDone = true;
@@ -372,12 +349,9 @@
     }, 200);
   }
 
-  // Control: can run only after listenDone
+  // control only allowed after listenDone
   function runControl(){
-    if(!controlAllowed){
-      appendLine('Control denied — run listen after a successful hack to enable control');
-      return;
-    }
+    if(!controlAllowed){ appendLine('Control denied — run listen after a successful hack to enable control'); return; }
     appendLine('[CONTROL MODE ENGAGED]');
     let ticks = 0; const max = 15;
     const t = setInterval(()=>{
@@ -392,38 +366,32 @@
     }, 200);
   }
 
-  // Command handler
+  // commands handler
   function handleCommand(raw){
-    const cmd = raw.trim().toLowerCase();
+    const cmd = (raw||'').trim().toLowerCase();
     if(cmd === '') return;
     appendLine('> ' + raw, 'cmd-echo');
-    if(cmd === 'firewall') { runFirewall(); return; }
-    if(cmd === 'hack') { runFakeHack(); return; }
-    if(cmd === 'listen') { runListen(); return; }
-    if(cmd === 'control') { runControl(); return; }
+    if(cmd === 'firewall'){ runFirewall(); return; }
+    if(cmd === 'hack'){ runFakeHack(); return; }
+    if(cmd === 'listen'){ runListen(); return; }
+    if(cmd === 'control'){ runControl(); return; }
     appendLine('Unknown command ' + raw);
   }
 
-  // Input key handling
+  // input handling
   cmdInput.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter'){
       const val = cmdInput.value;
       cmdInput.value = '';
-      if(!mainLoaded) { appendLine('Terminal not ready'); return; }
+      if(!mainLoaded){ appendLine('Terminal not ready'); return; }
       handleCommand(val);
     } else if(e.key === 'Escape'){
       hideTerminal();
     }
   });
 
-  function escapeHtml(s){
-    return s.replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"})[m]; });
-  }
-
-  // allow clicking loadBox to open terminal when ready
-  document.getElementById('loadBox').addEventListener('click', ()=>{
-    if(mainLoaded) showTerminal();
-  });
+  // click to open when ready
+  loadBox.addEventListener('click', ()=>{ if(mainLoaded) showTerminal(); });
 
 })();
 </script>
