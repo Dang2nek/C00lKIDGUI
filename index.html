@@ -716,6 +716,11 @@ function cmd_destroy_param(obj){
     appendLine('Destroyed all and reset state');
   }
 }
+function cmd_destroy_param(obj){
+  if (obj !== undefined && obj !== null) {
+    appendLine('Destroyed ' + String(obj));
+  }
+}
 
 /* =========================================================================
    Input parsing & routing
